@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Gép: 127.0.0.1
--- Létrehozás ideje: 2025. Dec 17. 16:25
+-- Létrehozás ideje: 2026. Jan 08. 18:26
 -- Kiszolgáló verziója: 10.4.32-MariaDB
 -- PHP verzió: 8.0.30
 
@@ -36,18 +36,6 @@ CREATE TABLE `reservations` (
   `peopleCount` int(11) NOT NULL,
   `status` varchar(20) DEFAULT 'pending'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- A tábla adatainak kiíratása `reservations`
---
-
-INSERT INTO `reservations` (`id`, `restaurantId`, `userId`, `date`, `time`, `peopleCount`, `status`) VALUES
-(2, 1, 3, '0000-00-00', '18:00', 2, 'pending'),
-(3, 2, 9, '0000-00-00', '18:00', 2, 'pending'),
-(4, 2, 10, '2026-04-13', '13:00', 10000000, 'pending'),
-(5, 1, 9, '0000-00-00', '18:00', 2, 'pending'),
-(6, 1, 11, '0000-00-00', '18:00', 2, 'pending'),
-(7, 1, 9, '0000-00-00', '18:00', 2, 'pending');
 
 -- --------------------------------------------------------
 
@@ -93,12 +81,8 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `name`, `email`, `password_hash`, `role`) VALUES
-(3, 'asd', 'kristofkvcs24@gmail.com', '$2a$10$LbBVAhHa8nEEpPi5.4yVJeOdNl42oT9BR3U1stTtYFk9Q7XOuTeTW', 'user'),
-(5, 'Admin Felhasználó', 'admin@example.com', '$2b$10$jEso/mzOfNWFZn1YRSAN/.ogLHOMfuKOzok/t0CkCXQrjOF/oaz6.', 'admin'),
-(9, 'Teszt Felhasználó', 'user@example.com', '$2b$10$Y5IuVMiXPsnIDvpRqTdilOf7JW2GoqbkHCteu65/lCq0BCHHvb0ti', 'user'),
-(10, 'kristofios', 'kovacskristof5a@gmail.com', '$2b$10$wGqpAlOVrWa3vZGUAajyQug2Yv7kdl14Xex3RGhBfy0zwZpfW0Nq.', 'user'),
-(11, 'blabla', 'blabla@fmail.com', '$2b$10$muECB2JH1X0M5l.Sko8N7.6Q78H.Lfg5uqN4IoDH9f7KpWC.qRLSC', 'user'),
-(12, 'Android ', 'android@gmail.com', '$2b$10$plIoMjH2Q46jvKovK2JcOeKVTXNDNUWlB1q0PbCJ8vSJoE0nAuQoe', 'user');
+(1, 'Admin Felhasználó', 'admin@example.com', '$2b$10$jEso/mzOfNWFZn1YRSAN/.ogLHOMfuKOzok/t0CkCXQrjOF/oaz6.', 'admin'),
+(2, 'Teszt Felhasználó', 'user@example.com', '$2b$10$Y5IuVMiXPsnIDvpRqTdilOf7JW2GoqbkHCteu65/lCq0BCHHvb0ti', 'user');
 
 --
 -- Indexek a kiírt táblákhoz
@@ -133,7 +117,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT a táblához `reservations`
 --
 ALTER TABLE `reservations`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT a táblához `restaurants`
@@ -145,7 +129,7 @@ ALTER TABLE `restaurants`
 -- AUTO_INCREMENT a táblához `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- Megkötések a kiírt táblákhoz
@@ -155,8 +139,8 @@ ALTER TABLE `users`
 -- Megkötések a táblához `reservations`
 --
 ALTER TABLE `reservations`
-  ADD CONSTRAINT `reservations_ibfk_1` FOREIGN KEY (`restaurantId`) REFERENCES `restaurants` (`id`),
-  ADD CONSTRAINT `reservations_ibfk_2` FOREIGN KEY (`userId`) REFERENCES `users` (`id`);
+  ADD CONSTRAINT `reservations_ibfk_1` FOREIGN KEY (`restaurantId`) REFERENCES `restaurants` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `reservations_ibfk_2` FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
