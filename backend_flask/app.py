@@ -79,3 +79,75 @@ def login():
             })
     finally:
         conn.close()
+
+@app.get("/api/restaurants")
+def get_restaurants():
+    conn = get_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM restaurants ORDER BY id DESC")
+            rows = cur.fetchall()
+            return jsonify(rows)
+    finally:
+        conn.close()
+
+@app.get("/api/restaurants/<int:rid>")
+def get_restaurant(rid):
+    conn = get_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM restaurants WHERE id=%s", (rid,))
+            row = cur.fetchone()
+            if not row:
+                return jsonify({"error": "Nincs ilyen étterem"}), 404
+            return jsonify(row)
+    finally:
+        conn.close()
+
+@app.post("/api/reservations")
+def create_reservation():
+    data = request.get_json(force=True)
+    restaurantId = data.get("restaurantId")
+    userId = data.get("userId")
+    date = data.get("date")
+    time = data.get("time")
+    peopleCount = data.get("peopleCount")
+
+    if not restaurantId or not userId or not date or not time or not peopleCount:
+        return jsonify({"error": "Hiányzó adatok a foglaláshoz"}), 400
+
+    conn = get_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO reservations (restaurantId, userId, date, time, peopleCount, status) VALUES (%s,%s,%s,%s,%s,'pending')",
+                (restaurantId, userId, date, time, peopleCount),
+            )
+            res_id = cur.lastrowid
+            return jsonify({"id": res_id, "status": "pending"}), 201
+    finally:
+        conn.close()
+
+@app.get("/api/reservations/user/<int:user_id>")
+def reservations_by_user(user_id):
+    conn = get_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT r.*, rt.name as restaurantName, rt.city, rt.address
+                FROM reservations r
+                JOIN restaurants rt ON rt.id = r.restaurantId
+                WHERE r.userId=%s
+                ORDER BY r.id DESC
+                """,
+                (user_id,),
+            )
+            rows = cur.fetchall()
+            return jsonify(rows)
+    finally:
+        conn.close()
+
+if __name__ == "__main__":
+    port = int(os.getenv("PORT", "5000"))
+    app.run(host="0.0.0.0", port=port, debug=True)
