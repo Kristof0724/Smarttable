@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SmartTable - Éttermek</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-title">SmartTable</div>
+    <button id="logoutBtn" class="btn small">Kijelentkezés</button>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <div class="title">Éttermek</div>
+      <div id="err" class="error"></div>
+      <div id="list" class="grid"></div>
+      <div id="loading" class="hint">Betöltés...</div>
+    </div>
+  </div>
+
+  <script type="module" src="js/restaurants.js"></script>
+</body>
+</html>
