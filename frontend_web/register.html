@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SmartTable - Regisztráció</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="title">Regisztráció</div>
+      <div id="err" class="error"></div>
+
+      <div class="label">Név</div>
+      <input id="name" class="input" type="text" placeholder="Pl.: Kiss Péter" />
+
+      <div class="label">E-mail</div>
+      <input id="email" class="input" type="email" placeholder="pl.: pelda@email.com" />
+
+      <div class="label">Jelszó</div>
+      <input id="password" class="input" type="password" placeholder="Minimum 4 karakter" />
+
+      <button id="registerBtn" class="btn">Regisztráció</button>
+
+      <a class="link" href="login.html">Már van fiókod? Jelentkezz be!</a>
+    </div>
+  </div>
+
+  <script type="module" src="js/register.js"></script>
+</body>
+</html>
