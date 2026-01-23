@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SmartTable - Étterem</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="topbar">
+    <a class="link" href="restaurants.html">← Vissza</a>
+    <div class="topbar-title">SmartTable</div>
+    <button id="logoutBtn" class="btn small">Kijelentkezés</button>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <div id="err" class="error"></div>
+      <div id="loading" class="hint">Betöltés...</div>
+
+      <div id="content" style="display:none;">
+        <div class="title" id="name"></div>
+
+        <div class="restaurant-meta" id="meta"></div>
+
+        <div class="section">
+          <div class="section-title">Leírás</div>
+          <div id="description" class="text"></div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Nyitvatartás</div>
+          <div id="openingHours" class="text"></div>
+        </div>
+
+        <button id="reserveBtn" class="btn" style="margin-top:14px;">
+          Foglalás
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/restaurant.js"></script>
+</body>
+</html>
