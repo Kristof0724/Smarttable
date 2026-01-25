@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SmartTable - Foglalás</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="topbar">
+    <a class="link" id="backLink" href="restaurants.html">← Vissza</a>
+    <div class="topbar-title">SmartTable</div>
+    <button id="logoutBtn" class="btn small">Kijelentkezés</button>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <div class="title">Asztalfoglalás</div>
+
+      <div id="err" class="error"></div>
+      <div id="ok" class="ok"></div>
+
+      <div class="label">Dátum</div>
+      <input id="date" class="input" type="date" />
+
+      <div class="label">Időpont</div>
+      <input id="time" class="input" type="time" />
+
+      <div class="label">Létszám</div>
+      <input
+        id="peopleCount"
+        class="input"
+        type="number"
+        min="1"
+        max="20"
+        value="2"
+      />
+
+      <button id="reserveBtn" class="btn">Foglalás véglegesítése</button>
+
+      <div class="hint" style="margin-top:12px;">
+        A sikeres foglalás után a "Foglalásaim" oldalra irányítunk.
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/reservations.js"></script>
+</body>
+</html>
