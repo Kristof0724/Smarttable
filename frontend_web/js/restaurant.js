@@ -72,7 +72,7 @@ async function loadRestaurant() {
 
     // Foglalás gomb → későbbi oldalra (még megcsináljuk)
     reserveBtn.addEventListener("click", () => {
-      window.location.href = `reservation.html?restaurantId=${encodeURIComponent(id)}`;
+      window.location.href = `reservations.html?restaurantId=${encodeURIComponent(id)}`;
     });
 
   } catch (err) {
