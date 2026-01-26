@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SmartTable - Admin</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="topbar">
+    <a class="link" href="restaurants.html">← Éttermek</a>
+    <div class="topbar-title">Admin felület</div>
+    <button id="logoutBtn" class="btn small">Kijelentkezés</button>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <div class="title">Foglalások kezelése</div>
+
+      <div id="err" class="error"></div>
+      <div id="ok" class="ok"></div>
+
+      <div class="grid" style="grid-template-columns: 1fr; gap: 10px; margin-top: 12px;">
+        <input id="q" class="input" type="text" placeholder="Keresés (étterem / név / email)..." />
+        <select id="statusFilter" class="input">
+          <option value="">Összes státusz</option>
+          <option value="pending">Függőben</option>
+          <option value="accepted">Elfogadva</option>
+          <option value="cancelled">Lemondva</option>
+        </select>
+      </div>
+
+      <div id="loading" class="hint" style="margin-top: 10px;">Betöltés...</div>
+      <div id="list" class="grid" style="margin-top: 12px;"></div>
+    </div>
+  </div>
+
+  <script type="module" src="js/admin.js"></script>
+</body>
+</html>

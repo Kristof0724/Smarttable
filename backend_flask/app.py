@@ -8,15 +8,44 @@ from db import get_conn
 load_dotenv()
 
 app = Flask(__name__)
+
+# CORS: frontend (http.server) + böngésző miatt kell
 CORS(app)
+
+def get_json():
+    """Biztonságos JSON beolvasás (ne force=True)."""
+    return request.get_json(silent=True) or {}
+
+def require_admin():
+    """
+    Egyszerű admin védelem:
+    - vár egy X-User-Id headert
+    - DB-ben megnézi, admin-e
+    """
+    user_id = request.headers.get("X-User-Id", "").strip()
+    if not user_id.isdigit():
+        return None, (jsonify({"error": "Admin azonosító hiányzik (X-User-Id)"}), 401)
+
+    conn = get_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id, role FROM users WHERE id=%s", (int(user_id),))
+            u = cur.fetchone()
+            if not u or u.get("role") != "admin":
+                return None, (jsonify({"error": "Nincs admin jogosultság"}), 403)
+            return u, None
+    finally:
+        conn.close()
+
 
 @app.get("/api/health")
 def health():
-    return jsonify({"ok": True, "service": "smarttable-flask"})
+    return jsonify({"ok": True, "service": "smarttable-flask"}), 200
+
 
 @app.post("/api/auth/register")
 def register():
-    data = request.get_json(force=True)
+    data = get_json()
     name = (data.get("name") or "").strip()
     email = (data.get("email") or "").strip().lower()
     password = data.get("password") or ""
@@ -38,8 +67,8 @@ def register():
                 "INSERT INTO users (name, email, password_hash, role) VALUES (%s, %s, %s, 'user')",
                 (name, email, pw_hash),
             )
+            conn.commit()
             user_id = cur.lastrowid
-
             return jsonify({
                 "id": user_id,
                 "name": name,
@@ -51,7 +80,7 @@ def register():
 
 @app.post("/api/auth/login")
 def login():
-    data = request.get_json(force=True)
+    data = get_json()
     email = (data.get("email") or "").strip().lower()
     password = data.get("password") or ""
 
@@ -61,7 +90,10 @@ def login():
     conn = get_conn()
     try:
         with conn.cursor() as cur:
-            cur.execute("SELECT id, name, email, password_hash, role FROM users WHERE email=%s", (email,))
+            cur.execute(
+                "SELECT id, name, email, password_hash, role FROM users WHERE email=%s",
+                (email,)
+            )
             user = cur.fetchone()
 
             if not user:
@@ -76,7 +108,7 @@ def login():
                 "name": user["name"],
                 "email": user["email"],
                 "role": user["role"]
-            })
+            }), 200
     finally:
         conn.close()
 
@@ -87,7 +119,7 @@ def get_restaurants():
         with conn.cursor() as cur:
             cur.execute("SELECT * FROM restaurants ORDER BY id DESC")
             rows = cur.fetchall()
-            return jsonify(rows)
+            return jsonify(rows), 200
     finally:
         conn.close()
 
@@ -100,13 +132,13 @@ def get_restaurant(rid):
             row = cur.fetchone()
             if not row:
                 return jsonify({"error": "Nincs ilyen étterem"}), 404
-            return jsonify(row)
+            return jsonify(row), 200
     finally:
         conn.close()
 
 @app.post("/api/reservations")
 def create_reservation():
-    data = request.get_json(force=True)
+    data = get_json()
     restaurantId = data.get("restaurantId")
     userId = data.get("userId")
     date = data.get("date")
@@ -120,9 +152,13 @@ def create_reservation():
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "INSERT INTO reservations (restaurantId, userId, date, time, peopleCount, status) VALUES (%s,%s,%s,%s,%s,'pending')",
+                """
+                INSERT INTO reservations (restaurantId, userId, date, time, peopleCount, status)
+                VALUES (%s,%s,%s,%s,%s,'pending')
+                """,
                 (restaurantId, userId, date, time, peopleCount),
             )
+            conn.commit()
             res_id = cur.lastrowid
             return jsonify({"id": res_id, "status": "pending"}), 201
     finally:
@@ -144,7 +180,71 @@ def reservations_by_user(user_id):
                 (user_id,),
             )
             rows = cur.fetchall()
-            return jsonify(rows)
+            return jsonify(rows), 200
+    finally:
+        conn.close()
+
+# =========================
+# ✅ ADMIN VÉGPONTOK
+# =========================
+
+@app.get("/api/reservations")
+def admin_get_all_reservations():
+    admin, err = require_admin()
+    if err:
+        return err
+
+    conn = get_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT
+                    r.id,
+                    r.date,
+                    r.time,
+                    r.peopleCount,
+                    r.status,
+                    u.name AS userName,
+                    u.email AS userEmail,
+                    rt.name AS restaurantName
+                FROM reservations r
+                JOIN users u ON u.id = r.userId
+                JOIN restaurants rt ON rt.id = r.restaurantId
+                ORDER BY r.id DESC
+                """
+            )
+            rows = cur.fetchall()
+            return jsonify(rows), 200
+    finally:
+        conn.close()
+
+
+@app.put("/api/reservations/<int:reservation_id>/status")
+def admin_update_reservation_status(reservation_id):
+    admin, err = require_admin()
+    if err:
+        return err
+
+    data = get_json()
+    status = (data.get("status") or "").strip().lower()
+
+    allowed = {"pending", "accepted", "cancelled"}
+    if status not in allowed:
+        return jsonify({"error": "Érvénytelen státusz."}), 400
+
+    conn = get_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE reservations SET status=%s WHERE id=%s",
+                (status, reservation_id),
+            )
+            if cur.rowcount == 0:
+                return jsonify({"error": "Nincs ilyen foglalás."}), 404
+
+            conn.commit()
+            return jsonify({"ok": True, "id": reservation_id, "status": status}), 200
     finally:
         conn.close()
 

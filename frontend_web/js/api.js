@@ -1,13 +1,25 @@
+import { getUser } from "./auth.js";
 const API_BASE = "http://localhost:5000/api";
 
 async function request(path, method = "GET", body) {
-  const opts = { method, headers: { "Content-Type": "application/json" } };
+  const user = getUser();
+const opts = { method, headers: { "Content-Type": "application/json" } };
+  // ✅ ADMIN / jogosultság – ha van bejelentkezett user
+  if (user && user.id) {
+    opts.headers["X-User-Id"] = String(user.id);
+  }
+
   if (body) opts.body = JSON.stringify(body);
 
   const res = await fetch(API_BASE + path, opts);
   const text = await res.text();
+
   let data = {};
-  try { data = text ? JSON.parse(text) : {}; } catch { data = { error: text || "Hiba" }; }
+  try { 
+    data = text ? JSON.parse(text) : {}; 
+  } catch { 
+    data = { error: text || "Hiba" }; 
+  }
 
   if (!res.ok) throw new Error(data.error || "Hálózati hiba");
   return data;
@@ -20,4 +32,6 @@ export const api = {
   getRestaurantById: (id) => request(`/restaurants/${id}`),
   createReservation: (payload) => request("/reservations", "POST", payload),
   getMyReservations: (userId) => request(`/reservations/user/${userId}`),
+  getAllReservations: () => request("/reservations"),
+  updateReservationStatus: (id, status) => request(`/reservations/${id}/status`, "PUT", { status }),
 };
