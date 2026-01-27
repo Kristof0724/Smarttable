@@ -1,9 +1,3 @@
-import { getUser } from "./auth.js";
-
-const adminBtn = document.getElementById("adminBtn");
-const user = getUser();
-if (adminBtn && user?.role === "admin") {
-  adminBtn.style.display = "inline-block";}
 import { api } from "./api.js";
 import { requireAuth, logout, getUser } from "./auth.js";
 
