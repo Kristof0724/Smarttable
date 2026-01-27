@@ -9,41 +9,41 @@ const loadingEl = document.getElementById("loading");
 const logoutBtn = document.getElementById("logoutBtn");
 
 function showError(msg) {
-  errEl.textContent = msg || "";
+	errEl.textContent = msg || "";
 }
 
 function setLoading(isLoading) {
-  loadingEl.style.display = isLoading ? "block" : "none";
+	loadingEl.style.display = isLoading ? "block" : "none";
 }
 
 logoutBtn.addEventListener("click", () => {
-  logout();
-  window.location.href = "login.html";
+	logout();
+	window.location.href = "login.html";
 });
 
 function formatStatus(status) {
-  const s = String(status || "").toLowerCase();
-  if (s === "accepted" || s === "approved") return "Elfogadva";
-  if (s === "cancelled" || s === "canceled") return "Lemondva";
-  if (s === "pending") return "Függőben";
-  return status || "Ismeretlen";
+	const s = String(status || "").toLowerCase();
+	if (s === "accepted" || s === "approved") return "Elfogadva";
+	if (s === "cancelled" || s === "canceled") return "Lemondva";
+	if (s === "pending") return "Függőben";
+	return status || "Ismeretlen";
 }
 
 function reservationCard(r) {
-  // Támogatjuk azt is, ha a backend ad vissza étteremnevet (pl. restaurantName vagy restaurant_name)
-  const restaurantName =
-    r.restaurantName || r.restaurant_name || r.name || null;
+	// Támogatjuk azt is, ha a backend ad vissza étteremnevet (pl. restaurantName vagy restaurant_name)
+	const restaurantName =
+		r.restaurantName || r.restaurant_name || r.name || null;
 
-  const date = r.date || "";
-  const time = r.time || "";
-  const people = r.peopleCount ?? r.people_count ?? "";
-  const status = formatStatus(r.status);
+	const date = r.date || "";
+	const time = r.time || "";
+	const people = r.peopleCount ?? r.people_count ?? "";
+	const status = formatStatus(r.status);
 
-  const restaurantText = restaurantName
-    ? restaurantName
-    : `Étterem ID: ${r.restaurantId ?? r.restaurant_id ?? "?"}`;
+	const restaurantText = restaurantName
+		? restaurantName
+		: `Étterem ID: ${r.restaurantId ?? r.restaurant_id ?? "?"}`;
 
-  return `
+	return `
     <div class="restaurant-card">
       <div class="restaurant-name">${restaurantText}</div>
       <div class="restaurant-meta">
@@ -57,33 +57,32 @@ function reservationCard(r) {
 }
 
 async function loadMyReservations() {
-  showError("");
-  setLoading(true);
-  listEl.innerHTML = "";
+	showError("");
+	setLoading(true);
+	listEl.innerHTML = "";
 
-  try {
-    const user = getUser();
-    const userId = user?.id;
+	try {
+		const user = getUser();
+		const userId = user?.id;
 
-    if (!userId) {
-      showError("Nincs bejelentkezett felhasználó.");
-      return;
-    }
+		if (!userId) {
+			showError("Nincs bejelentkezett felhasználó.");
+			return;
+		}
 
-    const reservations = await api.getMyReservations(userId);
+		const reservations = await api.getMyReservations(userId);
 
-    if (!reservations || reservations.length === 0) {
-      listEl.innerHTML = `<div class="hint">Még nincs foglalásod.</div>`;
-      return;
-    }
+		if (!reservations || reservations.length === 0) {
+			listEl.innerHTML = `<div class="hint">Még nincs foglalásod.</div>`;
+			return;
+		}
 
-    listEl.innerHTML = reservations.map(reservationCard).join("");
-
-  } catch (err) {
-    showError(err.message || "Hiba történt a foglalások betöltése közben.");
-  } finally {
-    setLoading(false);
-  }
+		listEl.innerHTML = reservations.map(reservationCard).join("");
+	} catch (err) {
+		showError(err.message || "Hiba történt a foglalások betöltése közben.");
+	} finally {
+		setLoading(false);
+	}
 }
 
 loadMyReservations();
