@@ -6,6 +6,10 @@ export function setUser(user) {
 	localStorage.setItem("user", JSON.stringify(user));
 }
 export function logout() {
+	// Backend session törlés (ha elérhető)
+	try {
+		fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" }).catch(()=>{});
+	} catch {}
 	localStorage.removeItem("user");
 	window.location.href = "login.html";
 }

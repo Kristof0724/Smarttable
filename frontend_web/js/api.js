@@ -1,5 +1,5 @@
 import { getUser } from "./auth.js";
-import { getUser } from "./auth.js";
+
 
 // ✅ automatikus host (LAN + telefon kompatibilis)
 const API_BASE = `${location.protocol}//${location.hostname}:5000/api`;

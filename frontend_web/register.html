@@ -1,57 +1,60 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="hu">
-	<head>
-		<meta charset="UTF-8" />
-		<meta
-			name="viewport"
-			content="width=device-width, initial-scale=1.0"
-		/>
-		<title>SmartTable – Regisztráció</title>
-		<link
-			href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-			rel="stylesheet"
-		/>
-		<link rel="stylesheet" href="css/style.css" />
-	</head>
-	<body>
-		<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
-			<div class="container">
-				<a class="navbar-brand fw-bold" href="index.html">SmartTable</a>
-			</div>
-		</nav>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SmartTable - Regisztráció</title>
 
-		<main class="container py-5" style="max-width: 520px">
-			<div class="card shadow-sm">
-				<div class="card-body p-4">
-					<h1 class="h4 mb-3">Regisztráció</h1>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
 
-					<div class="mb-3">
-						<label class="form-label">Név</label>
-						<input id="name" type="text" class="form-control" />
-					</div>
+</head>
+<body>
+  <main class="py-5">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6">
+          <a class="btn btn-link px-0 mb-3" href="index.html"><i class="bi bi-arrow-left me-1"></i>Vissza a kezdőlapra</a>
 
-					<div class="mb-3">
-						<label class="form-label">Email</label>
-						<input id="email" type="email" class="form-control" />
-					</div>
+          <div class="card st-card">
+            <div class="card-body p-4 p-lg-5">
+              <h1 class="h4 fw-bold mb-3">Regisztráció</h1>
 
-					<div class="mb-3">
-						<label class="form-label">Jelszó</label>
-						<input id="password" type="password" class="form-control" />
-					</div>
+              <div id="err" class="error mb-3"></div>
 
-					<button id="register" class="btn btn-primary w-100">Regisztráció</button>
+              <div class="row g-3">
+                <div class="col-12">
+                  <label class="form-label">Név</label>
+                  <input id="name" class="form-control" type="text" placeholder="Pl.: Kiss Péter" />
+                </div>
+                <div class="col-12">
+                  <label class="form-label">E-mail</label>
+                  <input id="email" class="form-control" type="email" placeholder="pl.: pelda@email.com" />
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Jelszó</label>
+                  <input id="password" class="form-control" type="password" placeholder="Minimum 4 karakter" />
+                </div>
+              </div>
 
-					<div id="err" class="text-danger small mt-3"></div>
+              <div class="d-grid gap-2 mt-4">
+                <button id="registerBtn" class="btn btn-primary btn-lg">
+                  <i class="bi bi-person-plus me-1"></i>Regisztráció
+                </button>
+                <a class="btn btn-outline-secondary" href="login.html">Már van fiókod? Jelentkezz be</a>
+              </div>
+            </div>
+          </div>
 
-					<div class="text-center mt-3">
-						<a href="login.html">Van fiókod? Belépés</a>
-					</div>
-				</div>
-			</div>
-		</main>
+        </div>
+      </div>
+    </div>
+  </main>
 
-		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-		<script type="module" src="js/register.js"></script>
-	</body>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script type="module" src="js/register.js"></script>
+</body>
 </html>
