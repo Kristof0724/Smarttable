@@ -7,7 +7,14 @@ const listEl = document.getElementById("list");
 const errEl = document.getElementById("err");
 const loadingEl = document.getElementById("loading");
 const logoutBtn = document.getElementById("logoutBtn");
+const adminBtn = document.getElementById("adminBtn");
 
+const _userNav = getUser();
+if (adminBtn && _userNav?.role === "admin") {
+	adminBtn.style.display = "inline-block";
+}
+
+logoutBtn?.addEventListener("click", () => logout());
 
 function showError(msg) {
 	if (!errEl) return;
