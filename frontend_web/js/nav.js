@@ -1,28 +1,44 @@
-import { getUser, logout } from "./auth.js";
+import { getUser, logout, isAdminLike, syncUserWithSession } from './auth.js';
 
-export function setupLandingNav() {
-  const user = getUser();
+function render(user) {
+  const leftNav = document.getElementById('landingLeftNav');
+  const rightNav = document.getElementById('landingRightNav');
+  if (!leftNav || !rightNav) return;
 
-  const loginLink = document.getElementById("navLogin");
-  const registerLink = document.getElementById("navRegister");
-  const logoutBtn = document.getElementById("logoutBtn");
-  const myRes = document.getElementById("navMyRes");
-  const restaurants = document.getElementById("navRestaurants");
-  const admin = document.getElementById("adminBtn");
+  const isLogged = !!user && !isAdminLike(user);
 
-  if (user) {
-    if (loginLink) loginLink.style.display = "none";
-    if (registerLink) registerLink.style.display = "none";
-    if (logoutBtn) logoutBtn.style.display = "inline-flex";
-    if (myRes) myRes.style.display = "inline-flex";
-    if (restaurants) restaurants.style.display = "inline-flex";
-    if (admin && user.role === "admin") admin.style.display = "inline-flex";
-  } else {
-    if (logoutBtn) logoutBtn.style.display = "none";
-    if (myRes) myRes.style.display = "none";
-    if (restaurants) restaurants.style.display = "none";
-    if (admin) admin.style.display = "none";
+  leftNav.innerHTML = `
+    <li class="nav-item"><a class="nav-link active" href="index.html">Kezdőlap</a></li>
+    <li class="nav-item"><a class="nav-link" href="restaurants.html">Éttermek</a></li>
+    ${isLogged ? '<li class="nav-item"><a class="nav-link" href="my_reservations.html">Foglalásaim</a></li>' : ''}
+  `;
+
+  if (isLogged) {
+    rightNav.innerHTML = `<button class="btn btn-outline-light st-auth-btn" id="logoutBtn"><i class="bi bi-box-arrow-right"></i><span>Kijelentkezés</span></button>`;
+    document.getElementById('logoutBtn')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      logout();
+    });
+    return;
   }
 
-  if (logoutBtn) logoutBtn.addEventListener("click", () => logout());
+  rightNav.innerHTML = `
+    <a class="btn btn-primary st-auth-btn" href="register.html"><i class="bi bi-person-plus"></i><span>Regisztráció</span></a>
+    <a class="btn btn-outline-light st-auth-btn" href="login.html"><i class="bi bi-box-arrow-in-right"></i><span>Bejelentkezés</span></a>
+  `;
+}
+
+export async function setupLandingNav() {
+  const cachedUser = getUser();
+  if (isAdminLike(cachedUser)) {
+    window.location.href = 'admin.html';
+    return;
+  }
+  render(cachedUser);
+  const user = await syncUserWithSession();
+  if (isAdminLike(user)) {
+    window.location.href = 'admin.html';
+    return;
+  }
+  render(user);
 }

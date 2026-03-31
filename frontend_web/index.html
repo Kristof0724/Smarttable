@@ -11,7 +11,7 @@
 
 </head>
 
-<body>
+<body class="st-page">
   <nav class="navbar navbar-expand-lg navbar-dark st-navbar position-absolute top-0 start-0 w-100">
     <div class="container py-2">
       <a class="navbar-brand fw-bold" href="index.html">SmartTable</a>
@@ -20,17 +20,14 @@
       </button>
 
       <div class="collapse navbar-collapse" id="nav">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0" id="landingLeftNav">
           <li class="nav-item"><a class="nav-link active" href="index.html">Kezdőlap</a></li>
-          <li class="nav-item"><a class="nav-link" href="restaurants.html" id="navRestaurants">Éttermek</a></li>
-          <li class="nav-item"><a class="nav-link" href="my_reservations.html" id="navMyRes">Foglalásaim</a></li>
-          <li class="nav-item"><a class="nav-link" href="admin.html" id="adminBtn" style="display:none;">Admin</a></li>
+          <li class="nav-item"><a class="nav-link" href="restaurants.html">Éttermek</a></li>
         </ul>
 
-        <div class="d-flex gap-2">
-          <a class="btn btn-outline-light" href="login.html" id="navLogin"><i class="bi bi-box-arrow-in-right me-1"></i>Bejelentkezés</a>
-          <a class="btn btn-primary" href="register.html" id="navRegister"><i class="bi bi-person-plus me-1"></i>Regisztráció</a>
-          <button class="btn btn-outline-light" id="logoutBtn" style="display:none;"><i class="bi bi-box-arrow-right me-1"></i>Kijelentkezés</button>
+        <div class="d-flex gap-2 align-items-center st-home-session-actions" id="landingRightNav">
+          <a class="btn btn-primary st-auth-btn" href="register.html"><i class="bi bi-person-plus"></i><span>Regisztráció</span></a>
+          <a class="btn btn-outline-light st-auth-btn" href="login.html"><i class="bi bi-box-arrow-in-right"></i><span>Bejelentkezés</span></a>
         </div>
       </div>
     </div>
@@ -39,8 +36,7 @@
   <header class="st-hero">
     <div class="container py-5">
       <div class="row align-items-center g-4">
-        <div class="col-lg-7">
-          <div class="st-badge mb-3"><i class="bi bi-lightning-charge"></i> <span>Egyszerű, gyors foglalás</span></div>
+        <div class="col-lg-8 st-hero-main-col">
           <h1 class="display-4 fw-bold mb-3"><span>Foglalj asztalt kedvenc éttermedben!</span></h1>
           <p class="lead text-white-50 mb-4">
             Válassz éttermet, add meg a dátumot, időpontot és a létszámot – pár kattintás és kész.
@@ -48,47 +44,44 @@
 
           <div class="card st-search-card">
             <div class="card-body p-3 p-lg-4">
-              <div class="row g-2">
-                <div class="col-12 col-lg-4">
+              <div class="st-landing-book-grid">
+                <div class="st-landing-field st-field-restaurant">
                   <label class="form-label mb-1">Város / étterem</label>
                   <div class="position-relative">
-                  <input id="restaurantSearch" autocomplete="off" class="form-control" placeholder="Pl.: Budapest, La Piazza">
+                    <input id="restaurantSearch" autocomplete="off" class="form-control st-control-lg" placeholder="Pl.: Budapest, La Piazza">
                     <div id="restaurantSearchSuggestions" class="list-group position-absolute w-100" style="z-index: 1000; top: 100%;"></div>
                   </div>
                 </div>
-                <div class="col-6 col-lg-3">
+                <div class="st-landing-field st-field-date">
                   <label class="form-label mb-1">Dátum</label>
-                  <input id="searchDate" class="form-control" type="date">
+                  <input id="searchDate" class="form-control st-control-lg" type="date">
                 </div>
-                <div class="col-6 col-lg-2">
+                <div class="st-landing-field st-field-time">
                   <label class="form-label mb-1">Időpont</label>
-                  <input id="searchTime" class="form-control" type="time" value="19:00" list="landingTimeSlots">
-                  <datalist id="landingTimeSlots"></datalist>
-                </div>
-                <div class="col-6 col-lg-1">
-                  <label class="form-label mb-1">Fő</label>
-                  <select id="searchPeople" class="form-select">
-                    <option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6+</option>
+                  <select id="searchTime" class="form-select st-control-lg">
+                    <option value=""></option>
                   </select>
                 </div>
-                <div class="col-6 col-lg-2 d-grid align-items-end">
-                  <button id="landingBookBtn" type="button" class="btn btn-primary mt-3 mt-lg-0" disabled>
-                    Asztalfoglalás <i class="bi bi-arrow-right ms-1"></i>
+                <div class="st-landing-field st-field-people">
+                  <label class="form-label mb-1">Fő</label>
+                  <input id="searchPeople" class="form-control st-control-lg text-center" type="number" min="1" max="39" step="1" placeholder="Fő">
+                </div>
+                <div class="st-landing-field st-field-submit">
+                  <label class="form-label mb-1 d-none d-lg-block">&nbsp;</label>
+                  <button id="landingBookBtn" type="button" class="btn btn-primary st-landing-book-btn" disabled>
+                    <span>Asztalfoglalás</span>
                   </button>
                 </div>
-                <div class="col-12">
-                  <div id="landingBookMsg" class="small mt-2"></div>
+                <div class="st-landing-message">
+                  <div id="landingBookMsg" class="small mt-1"></div>
                 </div>
               </div>
-              <div class="small text-white-50 mt-3">
-                Tipp: ha még nincs fiókod, regisztrálj és kezeld a foglalásaidat egy helyen.
-              </div>
-            </div>
+                          </div>
           </div>
         </div>
 
-        <div class="col-lg-5">
-          <div class="card st-card">
+        <div class="col-lg-4 st-hero-info-col">
+          <div class="card st-card st-hero-info-card">
             <div class="card-body p-4">
               <h5 class="fw-bold mb-3">Miért SmartTable?</h5>
               <div class="d-flex gap-3 mb-3">
@@ -112,11 +105,6 @@
                   <div class="text-secondary">Nézd meg mások véleményét foglalás előtt.</div>
                 </div>
               </div>
-              <hr>
-              <div class="d-flex gap-2">
-                <a class="btn btn-outline-primary" href="restaurants.html">Éttermek</a>
-                <a class="btn btn-primary" href="register.html">Fiók létrehozása</a>
-              </div>
             </div>
           </div>
         </div>
@@ -132,7 +120,7 @@
           <h2 class="st-section-title mb-1">Népszerű éttermek</h2>
           <div class="text-secondary">Átlag értékelés alapján rangsorolva.</div>
         </div>
-        <a class="btn btn-sm btn-outline-secondary" href="restaurants.html">Összes →</a>
+        <a class="btn btn-sm btn-outline-secondary" href="restaurants.html">Összes</a>
       </div>
 
       <div id="popularList" class="row g-3"></div>
@@ -173,16 +161,6 @@
     </div>
   </main>
 
-  <footer class="st-footer py-4">
-    <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2">
-      <div class="text-secondary small">© 2026 SmartTable</div>
-      <div class="small">
-        <a class="text-secondary me-3" href="index.html">Kezdőlap</a>
-        <a class="text-secondary me-3" href="restaurants.html">Éttermek</a>
-        <a class="text-secondary" href="login.html">Bejelentkezés</a>
-      </div>
-    </div>
-  </footer>
 
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -194,5 +172,8 @@
   initPopular();
   setupRestaurantSearchAutocomplete();
 </script>
+
+<footer class="st-footer-minimal"><div class="inner"><i class="bi bi-c-circle me-1"></i>SmartTable</div></footer>
+
 </body>
 </html>
