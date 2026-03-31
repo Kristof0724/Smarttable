@@ -20,15 +20,18 @@ function starsHtml(avg) {
   return out;
 }
 
-function card(r, bookLabel) {
+function card(r) {
   const name = r.name ?? "—";
   const city = r.city ?? "";
   const cuisine = r.cuisine ?? "";
   const avg = Number(r.avgRating || 0);
   const avgTxt = avg ? avg.toFixed(1) : "—";
+  let img = r.imageUrl ? String(r.imageUrl) : "assets/restaurant_sample.png";
+  if (img.startsWith("/")) img = img.slice(1);
   return `
   <div class="col-12 col-md-6 col-lg-3">
-    <div class="card st-card h-100">
+    <div class="card st-card h-100 restaurant-card" data-id="${r.id}">
+      <img class="restaurant-img" src="${img}" alt="${escapeHtml(name)}" onerror="this.onerror=null;this.src='assets/restaurant_sample.png';">
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-start gap-2">
           <div class="fw-bold">${escapeHtml(name)}</div>
@@ -37,9 +40,6 @@ function card(r, bookLabel) {
           </span>
         </div>
         <div class="text-secondary small mt-1">${escapeHtml([cuisine, city].filter(Boolean).join(" • "))}</div>
-        <div class="mt-3 d-grid">
-          <a class="btn btn-primary btn-sm" href="restaurant.html?id=${encodeURIComponent(r.id)}">${escapeHtml(bookLabel)}</a>
-        </div>
       </div>
     </div>
   </div>`;
@@ -57,8 +57,13 @@ export async function initPopular() {
       el.innerHTML = `<div class="hint">Még nincs toplista.</div>`;
       return;
     }
-    const bookLabel = "Foglalás";
-    el.innerHTML = top.map((r) => card(r, bookLabel)).join("");
+    el.innerHTML = top.map((r) => card(r)).join("");
+    el.querySelectorAll(".restaurant-card").forEach((cardEl) => {
+      cardEl.addEventListener("click", () => {
+        const id = cardEl.getAttribute("data-id");
+        if (id) window.location.href = `restaurant.html?id=${encodeURIComponent(id)}`;
+      });
+    });
   } catch (e) {
     el.innerHTML = `<div class="error">Betöltési hiba.</div>`;
   }
@@ -66,6 +71,7 @@ export async function initPopular() {
 
 let _allRestaurantsCache = null;
 let _selectedRestaurant = null;
+let _currentSlotState = [];
 
 async function getAllRestaurantsCached() {
   if (_allRestaurantsCache) return _allRestaurantsCache;
@@ -85,14 +91,47 @@ function setMessage(html, kind = "") {
   msg.innerHTML = html || "";
 }
 
+
+function renderTimeOptions(slots, peopleCount, currentTime) {
+  const select = document.getElementById('searchTime');
+  if (!select) return;
+  const options = ['<option value=""></option>'];
+  const filtered = (peopleCount ? slots.filter((slot) => slot.available) : slots);
+  filtered.forEach((slot) => {
+    const selected = currentTime && currentTime === slot.time ? ' selected' : '';
+    options.push(`<option value="${escapeHtml(slot.time)}"${selected}>${escapeHtml(slot.time)}</option>`);
+  });
+  select.innerHTML = options.join('');
+  if (currentTime && !filtered.some((slot) => String(slot.time) === String(currentTime))) {
+    select.value = '';
+  }
+}
+
+function refreshBookButtonState() {
+
+  const btn = document.getElementById("landingBookBtn");
+  const input = document.getElementById("restaurantSearch");
+  const dateEl = document.getElementById("searchDate");
+  const timeEl = document.getElementById("searchTime");
+  const peopleEl = document.getElementById("searchPeople");
+  if (!btn) return;
+  const hasRestaurant = !!(_selectedRestaurant || String(input?.value || "").trim());
+  const hasDate = !!String(dateEl?.value || "").trim();
+  const selectedTime = String(timeEl?.value || "").trim();
+  const hasTime = !!selectedTime;
+  const peopleCount = toIntPeople(peopleEl?.value);
+  const selectedSlot = _currentSlotState.find((slot) => String(slot.time) === selectedTime);
+  const slotAllowed = !selectedTime || !peopleCount || !selectedSlot ? true : !!selectedSlot.available;
+  btn.disabled = !(hasRestaurant && hasDate && hasTime && peopleCount && slotAllowed);
+}
+
 function setSelectedRestaurant(r) {
   _selectedRestaurant = r;
 
   const input = document.getElementById("restaurantSearch");
   if (input) input.value = r?.name ?? "";
 
-  const btn = document.getElementById("landingBookBtn");
-  if (btn) btn.disabled = !r;
+  refreshBookButtonState();
 
   if (r) {
     const meta = [r.cuisine, r.city].filter(Boolean).join(" • ");
@@ -140,8 +179,20 @@ function renderSuggestions(items, onPick) {
 
 function toIntPeople(v) {
   const s = String(v || "").trim();
-  if (s.endsWith("+")) return Number.parseInt(s, 10) || 6;
-  return Number.parseInt(s, 10) || 2;
+  if (!s) return null;
+  if (s.endsWith("+")) return Number.parseInt(s, 10) || null;
+  const n = Number.parseInt(s, 10);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+function applyPeopleLimit(input, capacity) {
+  if (!input) return;
+  const maxPeople = Math.max(1, (Number(capacity) || 40) - 1);
+  input.max = String(maxPeople);
+  const current = Number.parseInt(String(input.value || ""), 10);
+  if (Number.isFinite(current) && current > maxPeople) {
+    input.value = String(maxPeople);
+  }
 }
 
 function todayStrLocal() {
@@ -152,6 +203,22 @@ function todayStrLocal() {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+
+async function pickBestRestaurantFromInput(rawValue) {
+  const q = normalize(rawValue);
+  if (!q) return null;
+  const all = await getAllRestaurantsCached();
+  const exact = all.find((r) => normalize(r.name) === q);
+  if (exact) return exact;
+  const starts = all.find((r) => normalize(r.name).startsWith(q) || normalize(r.city).startsWith(q));
+  if (starts) return starts;
+  return all.find((r) => {
+    const name = normalize(r.name);
+    const city = normalize(r.city);
+    const cuisine = normalize(r.cuisine);
+    return name.includes(q) || city.includes(q) || cuisine.includes(q);
+  }) || null;
+}
 export async function setupRestaurantSearchAutocomplete() {
   const input = document.getElementById("restaurantSearch");
   const box = document.getElementById("restaurantSearchSuggestions");
@@ -159,47 +226,69 @@ export async function setupRestaurantSearchAutocomplete() {
   const timeEl = document.getElementById("searchTime");
   const peopleEl = document.getElementById("searchPeople");
   const bookBtn = document.getElementById("landingBookBtn");
-  const timeListEl = document.getElementById("landingTimeSlots");
 
   if (!input || !box) return;
 
-  // dátum default + min
   if (dateEl) {
     const t = todayStrLocal();
     if (!dateEl.value) dateEl.value = t;
     dateEl.min = t;
   }
 
+  refreshBookButtonState();
+
   let lastItems = [];
 
   async function refreshTimeSlots() {
-    if (!timeEl || !dateEl || !timeListEl) return;
+    if (!timeEl || !dateEl) return;
     if (!_selectedRestaurant || !_selectedRestaurant.id) {
-      timeListEl.innerHTML = "";
+      if (timeEl) timeEl.value = "";
+      renderTimeOptions([], peopleEl?.value, "");
+      refreshBookButtonState();
       return;
     }
 
     const date = dateEl.value;
     const peopleCount = toIntPeople(peopleEl?.value);
-    if (!date) return;
+    if (!date) {
+      refreshBookButtonState();
+      return;
+    }
 
     try {
-      const data = await api.getRestaurantTimeSlots(_selectedRestaurant.id, date, peopleCount);
+      const requestedPeople = peopleCount || 1;
+      const data = await api.getRestaurantTimeSlots(_selectedRestaurant.id, date, requestedPeople);
+      applyPeopleLimit(peopleEl, data?.capacity);
       const slots = Array.isArray(data?.slots) ? data.slots : [];
-      const available = slots.filter(s => s.available).map(s => s.time);
+      _currentSlotState = slots;
+      const available = slots.filter((s) => s.available).map((s) => s.time);
+      const allTimes = slots.map((s) => s.time);
+      const currentTime = timeEl?.value || "";
 
-      timeListEl.innerHTML = available.map(t => `<option value="${t}"></option>`).join("");
+      if (currentTime && allTimes.includes(currentTime) && (!peopleCount || available.includes(currentTime))) {
+        timeEl.value = currentTime;
+      } else if (peopleCount && currentTime && !available.includes(currentTime)) {
+        timeEl.value = "";
+      }
+      renderTimeOptions(slots, peopleCount, timeEl?.value || "");
 
-      // ha jelenlegi időpont nincs a listában, álljunk az első elérhetőre
-      if (available.length > 0) {
-        if (!available.includes(timeEl.value)) timeEl.value = available[0];
-        setMessage(`Elérhető idősávok: <b>${available.length}</b> • Kapacitás: <b>${escapeHtml(data.capacity)}</b>`, "text-white");
+      if (!peopleCount) {
+        setMessage("Add meg a létszámot a pontos szabad helyekhez.", "text-white-50");
+      } else if (available.length > 0) {
+        if (currentTime && !available.includes(currentTime)) {
+          setMessage(`A kiválasztott időpontra ennél a létszámnál már nincs hely. Válassz másik időpontot. • Kapacitás: <b>${escapeHtml(data.capacity)}</b>`, "text-warning");
+        } else {
+          setMessage(`Elérhető idősávok: <b>${available.length}</b> • Kapacitás: <b>${escapeHtml(data.capacity)}</b>`, "text-white");
+        }
       } else {
         setMessage('Nincs szabad idősáv ezen a napon a választott létszámmal.', 'text-warning');
       }
+      refreshBookButtonState();
     } catch (e) {
-      // ha hiba, ne állítsuk meg a foglalást, de jelezzünk
-      timeListEl.innerHTML = "";
+      _currentSlotState = [];
+      if (timeEl) timeEl.value = "";
+      renderTimeOptions([], peopleEl?.value, "");
+      refreshBookButtonState();
     }
   }
 
@@ -207,7 +296,6 @@ export async function setupRestaurantSearchAutocomplete() {
   async function update() {
     const q = normalize(input.value);
 
-    // ha a user elkezd átírni, töröljük a kiválasztást
     if (_selectedRestaurant && normalize(_selectedRestaurant.name) !== q) {
       setSelectedRestaurant(null);
     }
@@ -215,6 +303,7 @@ export async function setupRestaurantSearchAutocomplete() {
     if (!q) {
       renderSuggestions([], () => {});
       lastItems = [];
+      refreshBookButtonState();
       return;
     }
 
@@ -234,22 +323,33 @@ export async function setupRestaurantSearchAutocomplete() {
       renderSuggestions([], () => {});
       refreshTimeSlots();
     });
+    refreshBookButtonState();
   }
 
   input.addEventListener("input", () => {
     update();
   });
 
-  input.addEventListener("keydown", (e) => {
+  input.addEventListener("blur", async () => {
+    if (_selectedRestaurant || !String(input.value || "").trim()) return;
+    const picked = await pickBestRestaurantFromInput(input.value);
+    if (picked) {
+      setSelectedRestaurant(picked);
+      refreshTimeSlots();
+    }
+  });
+
+  input.addEventListener("keydown", async (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
       if (lastItems && lastItems.length > 0) {
         setSelectedRestaurant(lastItems[0]);
-        renderSuggestions([], () => {});
-        refreshTimeSlots();
       } else {
-        renderSuggestions([], () => {});
+        const picked = await pickBestRestaurantFromInput(input.value);
+        if (picked) setSelectedRestaurant(picked);
       }
+      renderSuggestions([], () => {});
+      refreshTimeSlots();
     }
     if (e.key === "Escape") {
       renderSuggestions([], () => {});
@@ -262,7 +362,13 @@ export async function setupRestaurantSearchAutocomplete() {
   });
 
   if (dateEl) dateEl.addEventListener("change", refreshTimeSlots);
-  if (peopleEl) peopleEl.addEventListener("change", refreshTimeSlots);
+  if (timeEl) {
+    timeEl.addEventListener('change', refreshBookButtonState);
+  }
+  if (peopleEl) {
+    peopleEl.addEventListener("change", refreshTimeSlots);
+    peopleEl.addEventListener("input", refreshTimeSlots);
+  }
 
   if (bookBtn) {
     bookBtn.addEventListener("click", async () => {
@@ -272,6 +378,14 @@ export async function setupRestaurantSearchAutocomplete() {
           setMessage("A foglaláshoz jelentkezz be! Átdobunk a bejelentkezésre…", "text-warning");
           window.location.href = "login.html";
           return;
+        }
+
+        if (!_selectedRestaurant) {
+          const picked = await pickBestRestaurantFromInput(input.value);
+          if (picked) {
+            setSelectedRestaurant(picked);
+            await refreshTimeSlots();
+          }
         }
 
         if (!_selectedRestaurant) {
@@ -285,6 +399,17 @@ export async function setupRestaurantSearchAutocomplete() {
 
         if (!date || !time) {
           setMessage("Add meg a dátumot és az időpontot.", "text-warning");
+          return;
+        }
+        if (!peopleCount) {
+          setMessage("Add meg a létszámot.", "text-warning");
+          return;
+        }
+
+        await refreshTimeSlots();
+        const chosenSlot = _currentSlotState.find((slot) => String(slot.time) === String(time));
+        if (!chosenSlot || !chosenSlot.available) {
+          setMessage("Erre az időpontra már nincs elég szabad hely. Kérlek válassz másik időpontot.", "text-warning");
           return;
         }
 
@@ -304,7 +429,7 @@ export async function setupRestaurantSearchAutocomplete() {
       } catch (err) {
         setMessage(escapeHtml(err?.message || "Hiba a foglalás mentésekor."), "text-danger");
       } finally {
-        if (bookBtn) bookBtn.disabled = !_selectedRestaurant;
+        refreshBookButtonState();
       }
     });
   }

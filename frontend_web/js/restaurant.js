@@ -1,7 +1,9 @@
 import { api } from "./api.js";
-import { requireAuth, logout, getUser } from "./auth.js";
+import { logout, getUser, redirectAdminUsers } from "./auth.js";
 
-requireAuth();
+redirectAdminUsers();
+
+
 
 function escapeHtml(s) {
 	return String(s ?? "")
@@ -18,6 +20,7 @@ function formatMoneyHuf(value) {
 	return `${new Intl.NumberFormat("hu-HU").format(n)} Ft`;
 }
 
+
 const errEl = document.getElementById("err");
 const loadingEl = document.getElementById("loading");
 const contentEl = document.getElementById("content");
@@ -33,6 +36,12 @@ const ratingCountEl = document.getElementById("ratingCount");
 
 const logoutBtn = document.getElementById("logoutBtn");
 const reserveBtn = document.getElementById("reserveBtn");
+const myResBtn = document.getElementById("myResBtn");
+const adminBtn = document.getElementById("adminBtn");
+
+const currentUser = getUser();
+if (!currentUser) { if (myResBtn) myResBtn.style.display = "none"; if (logoutBtn) logoutBtn.style.display = "none"; }
+if (currentUser && currentUser.role === "admin") { if (adminBtn) adminBtn.style.display = "inline-flex"; if (myResBtn) myResBtn.style.display = "none"; }
 
 const menuErrEl = document.getElementById("menuErr");
 const menuLoadingEl = document.getElementById("menuLoading");
@@ -355,7 +364,7 @@ async function loadReviews() {
 	}
 }
 
-logoutBtn.addEventListener("click", () => {
+logoutBtn?.addEventListener("click", () => {
 	logout();
 	window.location.href = "login.html";
 });
@@ -411,7 +420,7 @@ async function loadAll(id) {
 
 		let img = r?.imageUrl ? String(r.imageUrl) : "assets/restaurant_sample.png";
 		if (img.startsWith("/")) img = img.slice(1);
-		if (imgEl) imgEl.src = img;
+		if (imgEl) { imgEl.onerror = () => { imgEl.onerror = null; imgEl.src = "assets/restaurant_sample.png"; }; imgEl.src = img; }
 
 		nameEl.textContent = name;
 
@@ -452,10 +461,14 @@ async function loadAll(id) {
 
 		await loadReviews();
 
-		reserveBtn.addEventListener("click", () => {
+		reserveBtn?.addEventListener("click", () => {
+			const u = getUser();
+			if (!u) { window.location.href = "login.html"; return; }
 			window.location.href = `reservations.html?restaurantId=${encodeURIComponent(id)}`;
 		});
 
+		const reviewFormWrap = sendReviewBtn?.closest(".card") || sendReviewBtn?.parentElement?.parentElement;
+		if (!getUser() && reviewFormWrap) { reviewFormWrap.style.display = "none"; }
 		if (sendReviewBtn) {
 			sendReviewBtn.onclick = async () => {
 				showReviewError("");
