@@ -6,7 +6,7 @@ from decimal import Decimal
 import bcrypt
 from flask import Flask, jsonify, request, send_from_directory, redirect, abort, session
 from dotenv import load_dotenv
-from db import get_conn
+from db import get_conn, init_db
 
 load_dotenv()
 
@@ -20,6 +20,8 @@ app.config.update(
     SESSION_COOKIE_SAMESITE='Lax',
     SESSION_COOKIE_SECURE=(os.getenv('SESSION_COOKIE_SECURE', '0').strip() == '1'),
 )
+
+init_db()
 
 def _new_public_token() -> str:
     return secrets.token_hex(16)
