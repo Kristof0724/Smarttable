@@ -1,15 +1,15 @@
 import { api } from "./api.js";
-import { requireAuth, logout, getUser } from "./auth.js";
+import { requireAuth, logout, getUser, redirectAdminUsers } from "./auth.js";
 
-requireAuth();
+const authUser = requireAuth();
+redirectAdminUsers();
 
 const listEl = document.getElementById("list");
 const errEl = document.getElementById("err");
 const loadingEl = document.getElementById("loading");
 const logoutBtn = document.getElementById("logoutBtn");
 const adminBtn = document.getElementById("adminBtn");
-
-const _userNav = getUser();
+const _userNav = getUser() || authUser;
 if (adminBtn && _userNav?.role === "admin") {
 	adminBtn.style.display = "inline-block";
 }
@@ -117,6 +117,7 @@ function reservationCard(r) {
 	const rawStatus = String(r.status || "pending").toLowerCase();
 	const sm = statusMeta(rawStatus);
 
+	const canEdit = rawStatus === "pending" || rawStatus === "accepted";
 	const canCancel = rawStatus === "pending" || rawStatus === "accepted";
 
 		return `
@@ -133,7 +134,11 @@ function reservationCard(r) {
 	          </div>
 
 	          <div class="d-flex gap-2 mt-3 myres-actions">
-            <a class="btn btn-outline-secondary w-100" href="reservations.html?edit=${id}"><i class="bi bi-pencil-square me-1"></i>Módosítás</a>
+            ${
+				canEdit
+					? `<a class="btn btn-outline-secondary w-100" href="reservations.html?edit=${id}"><i class="bi bi-pencil-square me-1"></i>Módosítás</a>`
+					: `<button class="btn btn-outline-secondary w-100" disabled><i class="bi bi-pencil-square me-1"></i>Módosítás</button>`
+			}
             ${
 				canCancel
 					? `<button class="btn btn-outline-danger w-100 cancelBtn"><i class="bi bi-x-circle me-1"></i>Lemondás</button>`

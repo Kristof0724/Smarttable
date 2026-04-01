@@ -1,7 +1,8 @@
 import { api } from "./api.js";
-import { requireAuth, logout, getUser } from "./auth.js";
+import { requireAuth, logout, getUser, redirectAdminUsers } from "./auth.js";
 
-requireAuth();
+const authUser = requireAuth();
+redirectAdminUsers();
 
 const errEl = document.getElementById("err");
 const okEl = document.getElementById("ok");
@@ -9,10 +10,10 @@ const openHintEl = document.getElementById("openHint");
 
 const dateEl = document.getElementById("date");
 const timeEl = document.getElementById("time");
-const timeListEl = document.getElementById("reserveTimeSlots");
 const peopleEl = document.getElementById("peopleCount");
 
 const reserveBtn = document.getElementById("reserveBtn");
+let currentSlots = [];
 const logoutBtn = document.getElementById("logoutBtn");
 const backLink = document.getElementById("backLink");
 
@@ -68,10 +69,16 @@ async function initEditMode() {
   try {
     setLoading(true);
     const data = await api.getReservationById(editId);
+    const currentStatus = String(data?.status || "pending").toLowerCase();
+    if (!["pending", "accepted"].includes(currentStatus)) {
+      showError("A teljesített vagy lemondott foglalás már nem módosítható.");
+      if (reserveBtn) reserveBtn.disabled = true;
+      return;
+    }
     restaurantId = String(data.restaurantId);
     if (dateEl) dateEl.value = data.date || '';
     if (timeEl) timeEl.value = data.time || '';
-    if (peopleEl) peopleEl.value = String(data.peopleCount || 2);
+    if (peopleEl) peopleEl.value = String(data.peopleCount || '');
     refreshTimeSlots();
     if (reserveBtn) reserveBtn.disabled = false;
   } catch (e) {
@@ -88,44 +95,79 @@ if (dateEl) {
   dateEl.min = todayISO();
   if (!isEdit) dateEl.value = todayISO();
 }
-if (timeEl && !timeEl.value && !isEdit) timeEl.value = "18:00";
 
 if (!isEdit && restaurantId && backLink) {
   backLink.href = `restaurant.html?id=${encodeURIComponent(restaurantId)}`;
 }
 
+function getPeopleCount() {
+  const raw = String(peopleEl?.value || "").trim();
+  if (!raw) return null;
+  const n = Number.parseInt(raw, 10);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+function applyPeopleLimit(capacity) {
+  if (!peopleEl) return;
+  const maxPeople = Math.max(1, (Number(capacity) || 40) - 1);
+  peopleEl.max = String(maxPeople);
+  const current = Number.parseInt(String(peopleEl.value || ""), 10);
+  if (Number.isFinite(current) && current > maxPeople) {
+    peopleEl.value = String(maxPeople);
+  }
+}
+
 async function refreshTimeSlots() {
-  if (!restaurantId || !dateEl || !timeEl || !timeListEl) return;
+  if (!restaurantId || !dateEl || !timeEl) return;
 
   const user = getUser();
   if (!user?.id) return;
 
   const date = dateEl.value;
-  const peopleCount = Number(peopleEl?.value || 1);
+  const peopleCount = getPeopleCount();
   if (!date) return;
 
   try {
-    const data = await api.getRestaurantTimeSlots(restaurantId, date, peopleCount);
+    const requestedPeople = peopleCount || 1;
+    const data = await api.getRestaurantTimeSlots(restaurantId, date, requestedPeople, isEdit ? editId : null);
+    applyPeopleLimit(data?.capacity);
     const slots = Array.isArray(data?.slots) ? data.slots : [];
+    currentSlots = slots;
     const available = slots.filter((s) => s.available).map((s) => s.time);
+    const allTimes = slots.map((s) => s.time);
+    const currentTime = timeEl?.value || "";
 
-    timeListEl.innerHTML = available.map((t) => `<option value="${t}"></option>`).join("");
+    timeEl.innerHTML = [`<option value="">Válassz időpontot</option>`]
+      .concat(slots.map((slot) => {
+        const unavailable = !!peopleCount && !slot.available;
+        const selectedUnavailable = currentTime && currentTime === slot.time && unavailable;
+        const disabledAttr = unavailable && !selectedUnavailable ? ' disabled' : '';
+        const suffix = unavailable ? ' - megtelt' : '';
+        return `<option value="${slot.time}"${disabledAttr}>${slot.time}${suffix}</option>`;
+      }))
+      .join("");
+
+    if (currentTime && allTimes.includes(currentTime) && (!peopleCount || available.includes(currentTime))) {
+      timeEl.value = currentTime;
+    } else if (peopleCount && currentTime && !available.includes(currentTime)) {
+      timeEl.value = "";
+    }
 
     if (openHintEl) {
-      const openTxt = data?.openingTime && data?.closingTime ? `${data.openingTime}–${data.closingTime}` : (data?.openingHours || "");
+      const openTxt = data?.openingTime && data?.closingTime ? `${data.openingTime}-${data.closingTime}` : (data?.openingHours || "");
       const capTxt = data?.capacity ? `Kapacitás: ${data.capacity}` : "";
-      const availTxt = `Elérhető idősávok: ${available.length}`;
+      const availTxt = peopleCount ? `Elérhető idősávok: ${available.length}` : "Válassz létszámot a pontos szabad helyekhez";
       openHintEl.textContent = [openTxt && `Nyitvatartás: ${openTxt}`, capTxt, availTxt].filter(Boolean).join(" • ");
     }
 
-    if (available.length > 0 && !available.includes(timeEl.value)) {
-      timeEl.value = available[0];
-    }
-
-    if (available.length === 0) {
+    if (peopleCount && available.length === 0) {
       showError("Nincs szabad idősáv ezen a napon a választott létszámmal.");
+    } else if (peopleCount && currentTime && !available.includes(currentTime)) {
+      showError("A kiválasztott időpontra ennél a létszámnál már nincs hely. Válassz másik időpontot.");
     }
   } catch (e) {
+    currentSlots = [];
+    timeEl.innerHTML = `<option value="">Válassz időpontot</option>`;
   }
 }
 
@@ -151,6 +193,11 @@ peopleEl?.addEventListener("change", () => {
   showOk("");
   refreshTimeSlots();
 });
+peopleEl?.addEventListener("input", () => {
+  showError("");
+  showOk("");
+  refreshTimeSlots();
+});
 
 reserveBtn?.addEventListener("click", async () => {
   showError("");
@@ -161,14 +208,20 @@ reserveBtn?.addEventListener("click", async () => {
 
   const date = dateEl?.value;
   const time = timeEl?.value;
-  const peopleCount = Number(peopleEl?.value);
+  const peopleCount = getPeopleCount();
 
   if (!restaurantId) return showError("Hiányzik az étterem azonosító!");
   if (!date) return showError("Válassz dátumot!");
   if (!time) return showError("Válassz időpontot!");
-  if (!peopleCount || peopleCount < 1) return showError("A létszám minimum 1!");
+  if (!peopleCount) return showError("Add meg a létszámot!");
 
   try {
+    await refreshTimeSlots();
+    const chosenSlot = currentSlots.find((slot) => String(slot.time) === String(time));
+    if (!chosenSlot || !chosenSlot.available) {
+      return showError("Erre az időpontra már nincs elég szabad hely. Kérlek válassz másik időpontot.");
+    }
+
     setLoading(true);
 
     if (isEdit) {
