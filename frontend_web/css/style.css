@@ -148,7 +148,7 @@ body.st-page main{
 }
 .st-hero{
   min-height:auto;
-  padding:104px 0 32px;
+  padding:96px 0 28px;
   background:
     linear-gradient(180deg, rgba(15,23,42,.72), rgba(15,23,42,.56)),
     url("../assets/hero.jpg");
@@ -159,7 +159,7 @@ body.st-page main{
   align-items:center;
 }
 .st-hero .row{
-  align-items:flex-end;
+  align-items:center;
 }
 .st-hero-main-col,
 .st-hero-info-col{
@@ -167,19 +167,22 @@ body.st-page main{
   flex-direction:column;
 }
 .st-hero-main-col{
-  gap:1rem;
+  gap:.75rem;
 }
 .st-hero-info-col{
   justify-content:flex-end;
 }
 .st-search-card{
+  position:relative;
+  z-index:30;
   border-radius:28px;
   border:1px solid rgba(255,255,255,.16);
   box-shadow:0 18px 42px rgba(2,6,23,.24);
-  overflow:hidden;
+  overflow:visible;
 }
 .st-search-card .card-body{
   padding:1.25rem !important;
+  overflow:visible;
 }
 .st-hero-info-card{
   width:100%;
@@ -221,8 +224,20 @@ body.st-page main{
   border-radius:14px;
 }
 #restaurantSearchSuggestions{
+  display:none;
   max-height:260px;
   overflow:auto;
+  margin-top:8px;
+  border:1px solid var(--st-border);
+  border-radius:16px;
+  background:#fff;
+  box-shadow:0 18px 42px rgba(2,6,23,.24);
+}
+.st-field-restaurant,
+.st-field-restaurant .position-relative,
+.st-search-card,
+.st-search-card .card-body{
+  overflow:visible;
 }
 body.st-site-nav-body{
   padding-top:76px;
@@ -601,6 +616,9 @@ body.st-admin-page{
   }
 }
 @media (max-width:991.98px){
+  .st-hero .row{
+    align-items:flex-start;
+  }
   .st-navbar .navbar-collapse{
     margin-top:.75rem;
     padding:1rem;

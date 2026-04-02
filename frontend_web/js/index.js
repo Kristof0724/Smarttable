@@ -155,6 +155,10 @@ function renderSuggestions(items, onPick) {
   }
 
   box.style.display = "block";
+  box.style.left = "0";
+  box.style.right = "0";
+  box.style.top = "100%";
+  box.style.zIndex = "1200";
   box.innerHTML = items
     .map((r) => {
       const name = r.name ?? "—";
