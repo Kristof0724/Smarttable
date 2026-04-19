@@ -1,3 +1,4 @@
+// Ez a modul az új foglalás és a foglalásmódosítás oldal logikáját kezeli.
 import { api } from "./api.js";
 import { requireAuth, logout, getUser, redirectAdminUsers } from "./auth.js";
 
@@ -17,25 +18,30 @@ let currentSlots = [];
 const logoutBtn = document.getElementById("logoutBtn");
 const backLink = document.getElementById("backLink");
 
+// Megjeleníti a foglalási hibaüzenetet.
 function showError(msg) {
   if (errEl) errEl.textContent = msg || "";
 }
 
+// Megjeleníti a sikeres foglalási visszajelzést.
 function showOk(msg) {
   if (okEl) okEl.textContent = msg || "";
 }
 
+// Frissíti a foglalási oldal betöltési állapotát.
 function setLoading(loading) {
   if (!reserveBtn) return;
   reserveBtn.disabled = loading;
   reserveBtn.textContent = loading ? "Mentés..." : (isEdit ? "Módosítás mentése" : "Foglalás véglegesítése");
 }
 
+// Kinyeri az étterem azonosítóját az URL-ből.
 function getRestaurantId() {
   const params = new URLSearchParams(window.location.search);
   return params.get("restaurantId");
 }
 
+// Visszaadja a mai nap dátumát ISO formátumban.
 function todayISO() {
   const d = new Date();
   return d.toISOString().slice(0, 10);
@@ -48,6 +54,7 @@ logoutBtn?.addEventListener("click", () => {
 
 let restaurantId = getRestaurantId();
 
+// Kinyeri a szerkesztett foglalás azonosítóját az URL-ből.
 function getEditId() {
   const params = new URLSearchParams(window.location.search);
   return params.get("edit");
@@ -64,6 +71,7 @@ if (isEdit) {
   if (reserveBtn) reserveBtn.disabled = true;
 }
 
+// Betölti a meglévő foglalás adatait szerkesztési módban.
 async function initEditMode() {
   if (!isEdit) return;
   try {
@@ -100,6 +108,7 @@ if (!isEdit && restaurantId && backLink) {
   backLink.href = `restaurant.html?id=${encodeURIComponent(restaurantId)}`;
 }
 
+// Kiolvassa és ellenőrzi a megadott létszámot.
 function getPeopleCount() {
   const raw = String(peopleEl?.value || "").trim();
   if (!raw) return null;
@@ -107,6 +116,7 @@ function getPeopleCount() {
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
+// A kapacitás szerint korlátozza a maximális létszámot.
 function applyPeopleLimit(capacity) {
   if (!peopleEl) return;
   const maxPeople = Math.max(1, (Number(capacity) || 40) - 1);
@@ -117,6 +127,7 @@ function applyPeopleLimit(capacity) {
   }
 }
 
+// Frissíti a választható idősávokat a dátum és létszám alapján.
 async function refreshTimeSlots() {
   if (!restaurantId || !dateEl || !timeEl) return;
 

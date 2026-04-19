@@ -1,5 +1,7 @@
+// Ez a modul a kezdőoldali navigáció állapotát építi fel.
 import { getUser, logout, isAdminLike, syncUserWithSession } from './auth.js';
 
+// Felépíti a kezdőoldal navigációját a felhasználó állapota alapján.
 function render(user) {
   const leftNav = document.getElementById('landingLeftNav');
   const rightNav = document.getElementById('landingRightNav');
@@ -28,6 +30,7 @@ function render(user) {
   `;
 }
 
+// Betölti és frissíti a kezdőoldali navigációt.
 export async function setupLandingNav() {
   const cachedUser = getUser();
   if (isAdminLike(cachedUser)) {

@@ -1,3 +1,4 @@
+// Ez a modul a saját foglalások listázását és lemondását kezeli.
 import { api } from "./api.js";
 import { requireAuth, logout, getUser, redirectAdminUsers } from "./auth.js";
 
@@ -16,11 +17,13 @@ if (adminBtn && _userNav?.role === "admin") {
 
 logoutBtn?.addEventListener("click", () => logout());
 
+// Megjeleníti a saját foglalásokhoz tartozó hibaüzenetet.
 function showError(msg) {
 	if (!errEl) return;
 	errEl.textContent = msg || "";
 }
 
+// Frissíti a saját foglalások oldal betöltési állapotát.
 function setLoading(isLoading) {
 	if (!loadingEl) return;
 	loadingEl.style.display = isLoading ? "block" : "none";
@@ -33,6 +36,7 @@ const toastContainer = document.getElementById("toastContainer");
 const pendingCancelTimers = new Map();
 const pendingCancelPrevStatus = new Map();
 
+// Rövid értesítést jelenít meg a felhasználó számára.
 function showToast(message, variant = "success", action) {
 	if (!toastContainer) return;
 	const id = `t_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
@@ -85,6 +89,7 @@ function showToast(message, variant = "success", action) {
 	}
 }
 
+// A státuszhoz címkét és Bootstrap stílust rendel.
 function statusMeta(status) {
 	const s = String(status || "").toLowerCase();
 	if (s === "accepted" || s === "approved") return { label: "Elfogadva", badge: "text-bg-success" };
@@ -95,6 +100,7 @@ function statusMeta(status) {
 	return { label: "Függőben", badge: "text-bg-warning" };
 }
 
+// HTML-biztosra alakítja a kiírt szöveget.
 function escapeHtml(str) {
 	return String(str ?? "")
 		.replaceAll("&", "&amp;")
@@ -104,6 +110,7 @@ function escapeHtml(str) {
 		.replaceAll("'", "&#039;");
 }
 
+// Elkészíti egy saját foglalás kártya HTML-jét.
 function reservationCard(r) {
 	const id = r.id;
 	const restaurantName = r.restaurantName || r.restaurant_name || r.name || null;
@@ -159,6 +166,7 @@ let allRows = [];
 
 
 
+// Beköti a foglalások lemondásához tartozó gombokat.
 function bindCancelButtons() {
 	listEl.querySelectorAll(".cancelBtn").forEach((btn) => {
 		btn.addEventListener("click", async () => {
@@ -219,6 +227,7 @@ function bindCancelButtons() {
 	});
 }
 
+// Kirajzolja a saját foglalások listáját.
 function render() {
 	if (!allRows || allRows.length === 0) {
 		listEl.innerHTML = `<div class="hint">Még nincs foglalásod.</div>`;
@@ -229,6 +238,7 @@ function render() {
 	bindCancelButtons();
 		}
 
+// Betölti a bejelentkezett felhasználó foglalásait.
 async function loadMyReservations() {
 	showError("");
 	setLoading(true);

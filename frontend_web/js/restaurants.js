@@ -1,3 +1,4 @@
+// Ez a modul az éttermek listáját és az oldal navigációs állapotát kezeli.
 import { api } from './api.js';
 import { logout, redirectAdminUsers, syncUserWithSession, getUser } from './auth.js';
 
@@ -9,10 +10,12 @@ const loadingEl = document.getElementById('loading');
 const leftNavEl = document.getElementById('restaurantsLeftNav');
 const sessionActionsEl = document.getElementById('restaurantsSessionActions');
 
+// Eldönti, hogy normál bejelentkezett felhasználóról van-e szó.
 function isLoggedUser(user) {
   return !!user && String(user.role || '').toLowerCase() !== 'admin';
 }
 
+// HTML-biztosra alakítja a kiírt szöveget.
 function escapeHtml(str) {
   return String(str ?? '')
     .replaceAll('&', '&amp;')
@@ -22,6 +25,7 @@ function escapeHtml(str) {
     .replaceAll("'", '&#039;');
 }
 
+// A felhasználó állapota alapján felépíti az oldal navigációját.
 function renderNav(user) {
   const logged = isLoggedUser(user);
   if (leftNavEl) {
@@ -40,20 +44,24 @@ function renderNav(user) {
   }
 }
 
+// Frissíti a navigációt a szerveroldali session alapján is.
 async function applyNavState() {
   renderNav(getUser());
   const user = await syncUserWithSession();
   renderNav(user);
 }
 
+// Megjeleníti az étteremlista hibaüzenetét.
 function showError(msg) {
   errEl.textContent = msg || '';
 }
 
+// Frissíti az étteremlista betöltési állapotát.
 function setLoading(isLoading) {
   loadingEl.style.display = isLoading ? 'block' : 'none';
 }
 
+// Elkészíti a csillagos értékelés HTML-jét.
 function starsHtml(avg) {
   const a = Number(avg || 0);
   const full = Math.round(a);
@@ -64,6 +72,7 @@ function starsHtml(avg) {
   return out;
 }
 
+// Elkészíti egy étteremkártya HTML-jét.
 function cardTemplate(r) {
   const name = r.name ?? 'Névtelen étterem';
   const city = r.city ?? '';
@@ -89,6 +98,7 @@ function cardTemplate(r) {
   `;
 }
 
+// Betölti és kirajzolja az éttermek listáját.
 async function loadRestaurants() {
   showError('');
   setLoading(true);

@@ -1,3 +1,4 @@
+# Ez a modul kezeli a SmartTable Flask API végpontjait és a frontend kiszolgálását.
 import os
 import re
 import secrets
@@ -23,9 +24,11 @@ app.config.update(
 
 init_db()
 
+# Új publikus azonosítót generál a foglalások külső hivatkozásához.
 def _new_public_token() -> str:
     return secrets.token_hex(16)
 
+# Biztosítja, hogy a foglalás rendelkezzen egyedi publikus tokennel.
 def _ensure_public_token(conn, reservation_id: int) -> str:
     with conn.cursor() as cur:
         cur.execute("SELECT publicToken FROM reservations WHERE id=%s", (reservation_id,))
@@ -44,6 +47,7 @@ def _ensure_public_token(conn, reservation_id: int) -> str:
                 tok = _new_public_token()
         return tok
 
+# Egységes HH:MM formátumra alakítja az időértékeket.
 def _fmt_hhmm(v):
     if v is None:
         return None
@@ -59,6 +63,7 @@ def _fmt_hhmm(v):
         return s[:5]
     return s
 
+# A lejárt elfogadott foglalásokat automatikusan teljesítettre állítja.
 def _auto_complete_reservations(cur):
     try:
         now = datetime.now()
@@ -79,6 +84,7 @@ def _auto_complete_reservations(cur):
     except Exception:
         pass
 
+# JSON-kompatibilis formára alakítja az adatbázisból kapott értékeket.
 def _jsonable(obj):
     if obj is None or isinstance(obj, (str, int, float, bool)):
         return obj
@@ -109,12 +115,15 @@ def _jsonable(obj):
 
     return str(obj)
 
+# Biztonságosan JSON választ ad vissza a konvertált adatokkal.
 def jsonify_safe(payload, status=200):
     return jsonify(_jsonable(payload)), status
 
+# Kinyeri a kérés JSON törzsét, és üres objektumot ad vissza hiány esetén.
 def get_json():
     return request.get_json(silent=True) or {}
 
+# Ellenőrzi, hogy van-e bejelentkezett felhasználó a sessionben.
 def require_user():
     uid = session.get("user_id")
     if not uid:
@@ -132,6 +141,7 @@ def require_user():
     finally:
         conn.close()
 
+# Ellenőrzi, hogy a bejelentkezett felhasználó admin jogosultságú-e.
 def require_admin():
     u, err = require_user()
     if err:
@@ -140,6 +150,7 @@ def require_admin():
         return None, (jsonify({"error": "Nincs admin jogosultság"}), 403)
     return u, None
 
+# Percek számára alakítja a különböző időformátumokat.
 def _time_to_minutes(t) -> int:
     if t is None:
         return -1
@@ -166,16 +177,19 @@ def _time_to_minutes(t) -> int:
     except Exception:
         return -1
 
+# A percértéket felfelé kerekíti a megadott idősáv méretére.
 def _round_up_to_slot(mins: int, slot: int = 30) -> int:
     if mins < 0:
         return mins
     return ((mins + slot - 1) // slot) * slot
 
+# A percben megadott időt HH:MM formára alakítja.
 def _mins_to_hhmm(mins: int) -> str:
     h = (mins // 60) % 24
     m = mins % 60
     return f"{h:02d}:{m:02d}"
 
+# A nyitási és zárási idő között létrehozza a foglalható idősávokat.
 def _build_time_slots(open_min: int, close_min: int, slot: int = 30):
     if open_min < 0 or close_min < 0 or close_min <= open_min:
         return []
@@ -187,6 +201,7 @@ def _build_time_slots(open_min: int, close_min: int, slot: int = 30):
         t += slot
     return out
 
+# Visszaadja a dátumhoz tartozó magyar nap-rövidítést.
 def _weekday_token(date_iso: str) -> str:
     try:
         d = datetime.strptime(date_iso, "%Y-%m-%d").date()
@@ -195,6 +210,7 @@ def _weekday_token(date_iso: str) -> str:
     except Exception:
         return ""
 
+# Kibővíti a napintervallumot az érintett napok listájára.
 def _expand_days(day_part: str):
     s = day_part.strip()
     s = s.replace(" ", "")
@@ -210,6 +226,7 @@ def _expand_days(day_part: str):
         return tokens[ai: bi + 1]
     return tokens[ai:] + tokens[: bi + 1]
 
+# Kinyeri a megadott naphoz tartozó nyitási és zárási időt.
 def parse_opening_hours(opening_str: str, date_iso: str):
     if not opening_str:
         return None, None
@@ -233,10 +250,12 @@ def parse_opening_hours(opening_str: str, date_iso: str):
         return m2.group(1), m2.group(2)
     return None, None
 
+# Egyszerű állapotellenőrző választ ad a backend működéséről.
 @app.get("/api/health")
 def health():
     return jsonify({"ok": True, "service": "smarttable-flask"}), 200
 
+# Regisztrál egy új felhasználót és eltárolja a titkosított jelszót.
 @app.post("/api/auth/register")
 def register():
     data = get_json()
@@ -274,6 +293,7 @@ def register():
     finally:
         conn.close()
 
+# Bejelentkezteti a felhasználót és létrehozza a sessiont.
 @app.post("/api/auth/login")
 def login():
     data = get_json()
@@ -314,11 +334,13 @@ def login():
     finally:
         conn.close()
 
+# Kijelentkezteti a felhasználót és törli a session adatait.
 @app.post("/api/auth/logout")
 def logout_api():
     session.clear()
     return jsonify({"ok": True}), 200
 
+# Visszaadja az aktuálisan bejelentkezett felhasználó adatait.
 @app.get("/api/auth/me")
 def me():
     u, err = require_user()
@@ -326,6 +348,7 @@ def me():
         return err
     return jsonify({"id": u["id"], "name": u.get("name"), "email": u.get("email"), "role": u.get("role")}), 200
 
+# Lekéri az éttermek listáját a fő adatokkal együtt.
 @app.get("/api/restaurants")
 def get_restaurants():
     conn = get_conn()
@@ -350,6 +373,7 @@ def get_restaurants():
     finally:
         conn.close()
 
+# Lekéri a népszerű éttermek listáját a kezdőlaphoz.
 @app.get("/api/restaurants/popular")
 def get_popular_restaurants():
     conn = get_conn()
@@ -375,6 +399,7 @@ def get_popular_restaurants():
     finally:
         conn.close()
 
+# Lekéri a legjobbra értékelt éttermek listáját.
 @app.get("/api/restaurants/top")
 def get_top_restaurants():
     conn = get_conn()
@@ -400,6 +425,7 @@ def get_top_restaurants():
     finally:
         conn.close()
 
+# Lekéri egy kiválasztott étterem részletes adatait.
 @app.get("/api/restaurants/<int:rid>")
 def get_restaurant(rid):
     conn = get_conn()
@@ -427,6 +453,7 @@ def get_restaurant(rid):
     finally:
         conn.close()
 
+# Lekéri az étterem szabad idősávjait a megadott napra és létszámra.
 @app.get("/api/restaurants/<int:rid>/time-slots")
 def get_restaurant_time_slots(rid):
     date_str = (request.args.get("date") or "").strip()
@@ -502,6 +529,7 @@ def get_restaurant_time_slots(rid):
     finally:
         conn.close()
 
+# Lekéri az adott étterem étlapját.
 @app.get("/api/restaurants/<int:rid>/menu")
 def get_restaurant_menu(rid):
     conn = get_conn()
@@ -516,6 +544,7 @@ def get_restaurant_menu(rid):
     finally:
         conn.close()
 
+# Lekéri az adott étterem aktív ajánlatait.
 @app.get("/api/restaurants/<int:rid>/deals")
 def get_restaurant_deals(rid):
     conn = get_conn()
@@ -535,6 +564,7 @@ def get_restaurant_deals(rid):
     finally:
         conn.close()
 
+# Lekéri az adott étterem értékeléseit és válaszait.
 @app.get("/api/restaurants/<int:rid>/reviews")
 def get_restaurant_reviews(rid):
     conn = get_conn()
@@ -568,6 +598,7 @@ def get_restaurant_reviews(rid):
     finally:
         conn.close()
         
+# Új értékelést ment az adott étteremhez.
 @app.post("/api/restaurants/<int:rid>/reviews")
 def add_restaurant_review(rid):
     user, err = require_user()
@@ -616,6 +647,7 @@ def add_restaurant_review(rid):
     finally:
         conn.close()
 
+# Létrehozza vagy frissíti az admin válaszát egy értékeléshez.
 @app.post("/api/reviews/<int:review_id>/response")
 def upsert_review_response(review_id):
     admin_user, err = require_admin()
@@ -650,6 +682,7 @@ def upsert_review_response(review_id):
     finally:
         conn.close()
 
+# Új foglalást hoz létre a megadott adatok alapján.
 @app.post("/api/reservations")
 def create_reservation():
     user, err = require_user()
@@ -742,6 +775,7 @@ def create_reservation():
     finally:
         conn.close()
 
+# Lekéri egy felhasználó összes foglalását étteremadatokkal együtt.
 @app.get("/api/reservations/user/<int:user_id>")
 def reservations_by_user(user_id):
     user, err = require_user()
@@ -767,6 +801,7 @@ def reservations_by_user(user_id):
     finally:
         conn.close()
 
+# Lekéri a bejelentkezett felhasználó saját foglalásait.
 @app.get("/api/reservations/me")
 def reservations_me():
     user, err = require_user()
@@ -774,6 +809,7 @@ def reservations_me():
         return err
     return reservations_by_user(int(user.get('id')))
 
+# Ellenőrzi, hogy a felhasználó módosíthatja-e az adott foglalást.
 def _reservation_permission(reservation_id: int):
     user, err = require_user()
     if err:
@@ -792,6 +828,7 @@ def _reservation_permission(reservation_id: int):
     finally:
         conn.close()
 
+# Lekéri egy konkrét foglalás részletes adatait.
 @app.get("/api/reservations/<int:reservation_id>")
 def get_reservation_by_id(reservation_id):
     _, err = _reservation_permission(reservation_id)
@@ -819,6 +856,7 @@ def get_reservation_by_id(reservation_id):
     finally:
         conn.close()
 
+# Frissíti a foglalás adatait az üzleti szabályok figyelembevételével.
 @app.put("/api/reservations/<int:reservation_id>")
 def update_reservation(reservation_id):
     _, err = _reservation_permission(reservation_id)
@@ -911,6 +949,7 @@ def update_reservation(reservation_id):
     finally:
         conn.close()
 
+# Lekéri az admin felület összes kezelhető foglalását.
 @app.get("/api/reservations")
 def admin_get_all_reservations():
     admin, err = require_admin()
@@ -942,6 +981,7 @@ def admin_get_all_reservations():
     finally:
         conn.close()
 
+# Módosítja egy foglalás státuszát admin oldalon.
 @app.put("/api/reservations/<int:reservation_id>/status")
 def admin_update_reservation_status(reservation_id):
     admin, err = require_admin()
@@ -969,6 +1009,7 @@ def admin_update_reservation_status(reservation_id):
     finally:
         conn.close()
 
+# Lemondja a felhasználó saját foglalását.
 @app.put("/api/reservations/<int:reservation_id>/cancel")
 def user_cancel_reservation(reservation_id):
     user, err = require_user()
@@ -996,6 +1037,7 @@ def user_cancel_reservation(reservation_id):
     finally:
         conn.close()
 
+# Összesítő statisztikákat ad vissza az admin dashboard számára.
 @app.get("/api/admin/dashboard")
 def admin_dashboard():
     admin, err = require_admin()
@@ -1174,6 +1216,7 @@ def admin_dashboard():
     finally:
         conn.close()
 
+# Lekéri az admin által kezelhető étlap elemeket.
 @app.get("/api/admin/menu-items")
 def admin_get_menu_items():
     admin, err = require_admin()
@@ -1199,6 +1242,7 @@ def admin_get_menu_items():
     finally:
         conn.close()
 
+# Új étlap tételt hoz létre az admin felületről.
 @app.post("/api/admin/menu-items")
 def admin_create_menu_item():
     admin, err = require_admin()
@@ -1235,6 +1279,7 @@ def admin_create_menu_item():
     finally:
         conn.close()
 
+# Frissíti egy meglévő étlap tétel adatait.
 @app.put("/api/admin/menu-items/<int:item_id>")
 def admin_update_menu_item(item_id):
     admin, err = require_admin()
@@ -1270,6 +1315,7 @@ def admin_update_menu_item(item_id):
     finally:
         conn.close()
 
+# Töröl egy étlap tételt az admin felületről.
 @app.delete("/api/admin/menu-items/<int:item_id>")
 def admin_delete_menu_item(item_id):
     admin, err = require_admin()
@@ -1284,6 +1330,7 @@ def admin_delete_menu_item(item_id):
     finally:
         conn.close()
 
+# Lekéri az admin által kezelhető akciókat.
 @app.get("/api/admin/hot-deals")
 def admin_get_hot_deals():
     admin, err = require_admin()
@@ -1308,6 +1355,7 @@ def admin_get_hot_deals():
     finally:
         conn.close()
 
+# Új akciót hoz létre az admin felületről.
 @app.post("/api/admin/hot-deals")
 def admin_create_hot_deal():
     admin, err = require_admin()
@@ -1347,6 +1395,7 @@ def admin_create_hot_deal():
     finally:
         conn.close()
 
+# Frissíti egy meglévő akció adatait.
 @app.put("/api/admin/hot-deals/<int:deal_id>")
 def admin_update_hot_deal(deal_id):
     admin, err = require_admin()
@@ -1385,6 +1434,7 @@ def admin_update_hot_deal(deal_id):
     finally:
         conn.close()
 
+# Töröl egy akciót az admin felületről.
 @app.delete("/api/admin/hot-deals/<int:deal_id>")
 def admin_delete_hot_deal(deal_id):
     admin, err = require_admin()
@@ -1399,6 +1449,7 @@ def admin_delete_hot_deal(deal_id):
     finally:
         conn.close()
 
+# Lekéri az admin számára látható értékeléseket.
 @app.get("/api/admin/reviews")
 def admin_get_reviews():
     admin, err = require_admin()
@@ -1434,6 +1485,7 @@ def admin_get_reviews():
     finally:
         conn.close()
 
+# Lekéri a vendégek listáját alap statisztikákkal.
 @app.get("/api/admin/guests")
 def admin_get_guests():
     admin, err = require_admin()
@@ -1485,6 +1537,7 @@ def admin_get_guests():
     finally:
         conn.close()
 
+# Kiszolgálja a frontend fájlokat és az alap útvonalat.
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
 def serve_frontend(path):

@@ -1,5 +1,7 @@
+// Ez a modul egységes API-hívásokat biztosít a frontend számára.
 const API_BASE = "/api";
 
+// Egységesen elküldi az API-kérést és kezeli a válaszhibákat.
 async function request(path, method = "GET", body) {
 	const opts = {
 		method,
@@ -37,6 +39,7 @@ async function request(path, method = "GET", body) {
 	return data;
 }
 
+// Ez az objektum fogja össze a frontend összes backend hívását.
 export const api = {
 	login: (email, password) =>
 		request("/auth/login", "POST", { email, password }),

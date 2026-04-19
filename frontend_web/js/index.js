@@ -1,6 +1,8 @@
+// Ez a modul a kezdőlap keresőjét, ajánlásait és gyors foglalási elemeit kezeli.
 import { api } from "./api.js";
 import { getUser } from "./auth.js";
 
+// HTML-biztosra alakítja a kiírt szöveget.
 function escapeHtml(str) {
   return String(str ?? "")
     .replaceAll("&", "&amp;")
@@ -10,6 +12,7 @@ function escapeHtml(str) {
     .replaceAll("'", "&#039;");
 }
 
+// Elkészíti a csillagos értékelés HTML-jét.
 function starsHtml(avg) {
   const a = Number(avg || 0);
   const full = Math.round(a);
@@ -20,6 +23,7 @@ function starsHtml(avg) {
   return out;
 }
 
+// Elkészíti egy ajánlott étterem kártya HTML-jét.
 function card(r) {
   const name = r.name ?? "—";
   const city = r.city ?? "";
@@ -45,6 +49,7 @@ function card(r) {
   </div>`;
 }
 
+// Betölti és megjeleníti a népszerű éttermeket a kezdőlapon.
 export async function initPopular() {
   const el = document.getElementById("popularList");
   if (!el) return;
@@ -73,6 +78,7 @@ let _allRestaurantsCache = null;
 let _selectedRestaurant = null;
 let _currentSlotState = [];
 
+// Egyszer tölti be és gyorsítótárazza az összes éttermet.
 async function getAllRestaurantsCached() {
   if (_allRestaurantsCache) return _allRestaurantsCache;
   const list = await api.getRestaurants();
@@ -80,10 +86,12 @@ async function getAllRestaurantsCached() {
   return _allRestaurantsCache;
 }
 
+// Kereséshez egységes alakra hozza a szöveget.
 function normalize(s) {
   return String(s || "").toLowerCase().trim();
 }
 
+// Megjeleníti a keresőhöz tartozó információs üzenetet.
 function setMessage(html, kind = "") {
   const msg = document.getElementById("landingBookMsg");
   if (!msg) return;
@@ -92,6 +100,7 @@ function setMessage(html, kind = "") {
 }
 
 
+// Feltölti az elérhető időpontok listáját az űrlapon.
 function renderTimeOptions(slots, peopleCount, currentTime) {
   const select = document.getElementById('searchTime');
   if (!select) return;
@@ -107,6 +116,7 @@ function renderTimeOptions(slots, peopleCount, currentTime) {
   }
 }
 
+// A kiválasztások alapján frissíti a foglalás gomb állapotát.
 function refreshBookButtonState() {
 
   const btn = document.getElementById("landingBookBtn");
@@ -125,6 +135,7 @@ function refreshBookButtonState() {
   btn.disabled = !(hasRestaurant && hasDate && hasTime && peopleCount && slotAllowed);
 }
 
+// Beállítja a kiválasztott éttermet a gyors foglalóban.
 function setSelectedRestaurant(r) {
   _selectedRestaurant = r;
 
@@ -144,6 +155,7 @@ function setSelectedRestaurant(r) {
   }
 }
 
+// Megjeleníti a kereső automatikus találati listáját.
 function renderSuggestions(items, onPick) {
   const box = document.getElementById("restaurantSearchSuggestions");
   if (!box) return;
@@ -181,6 +193,7 @@ function renderSuggestions(items, onPick) {
   };
 }
 
+// Érvényes egész számmá alakítja a megadott létszámot.
 function toIntPeople(v) {
   const s = String(v || "").trim();
   if (!s) return null;
@@ -189,6 +202,7 @@ function toIntPeople(v) {
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
+// Korlátozza a választható létszámot az étterem kapacitása szerint.
 function applyPeopleLimit(input, capacity) {
   if (!input) return;
   const maxPeople = Math.max(1, (Number(capacity) || 40) - 1);
@@ -199,6 +213,7 @@ function applyPeopleLimit(input, capacity) {
   }
 }
 
+// Visszaadja a mai nap dátumát helyi ISO formátumban.
 function todayStrLocal() {
   const d = new Date();
   const yyyy = d.getFullYear();
@@ -208,6 +223,7 @@ function todayStrLocal() {
 }
 
 
+// A beírt szöveg alapján kiválasztja a legjobb étterem-találatot.
 async function pickBestRestaurantFromInput(rawValue) {
   const q = normalize(rawValue);
   if (!q) return null;
@@ -223,6 +239,7 @@ async function pickBestRestaurantFromInput(rawValue) {
     return name.includes(q) || city.includes(q) || cuisine.includes(q);
   }) || null;
 }
+// Bekapcsolja a kereső automatikus kiegészítését és az űrlaplogikát.
 export async function setupRestaurantSearchAutocomplete() {
   const input = document.getElementById("restaurantSearch");
   const box = document.getElementById("restaurantSearchSuggestions");

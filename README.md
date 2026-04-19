@@ -15,29 +15,32 @@ A commit history-ban több alias is szerepel, de a projektet **3 fő készített
 
 ---
 
-## Fő funkciók (röviden)
+## Fő funkciók
 
 ### Vendég (user)
 - Regisztráció / bejelentkezés  
-- Éttermek listázása, keresése, népszerű/top listák  
-- Étterem részletező: étlap, hot deals, vélemények  
-- Foglalás létrehozása idősáv alapján  
-- Saját foglalások listázása, módosítása/lemondása *(ha engedélyezett)*  
-- Értékelés (**1–5 csillag + szöveg**), admin válasz a véleményre  
+- Éttermek listázása, keresése, népszerű és top listák  
+- Étterem részletező oldal: nyitvatartás, étlap, hot deals, értékelések  
+- Asztalfoglalás idősáv és létszám alapján  
+- Saját foglalások megtekintése, módosítása és lemondása *(ha a státusz engedi)*  
+- Saját értékelés írása csillaggal és szöveggel  
 
 ### Admin
-- Admin dashboard (összesítők)  
-- Foglalások listázása és státuszkezelése (pl. `pending` / `accepted` / `completed`)  
-- Admin felület külön oldalon: `admin.html` + `admin.js`  
+- Admin dashboard összesítő statisztikákkal  
+- Foglalások kezelése és státusz módosítása  
+- Értékelések áttekintése és válasz írása  
+- Étlap és hot deal tartalmak kezelése  
+- Vendéglista megtekintése  
 
 ---
 
 ## Technológiák
 
-- **Backend:** Python **Flask** *(REST API + statikus frontend kiszolgálás)*  
-- **Adatbázis:** **MySQL / MariaDB** *(PyMySQL)*  
-- **Frontend:** HTML + **Bootstrap** + JavaScript  
-- **Auth:** session/cookie alapú *(Flask session)*  
+- **Backend:** Python + **Flask**  
+- **Adatbázis:** **MySQL / MariaDB** + PyMySQL  
+- **Frontend:** HTML + Bootstrap + JavaScript  
+- **Hitelesítés:** session / cookie alapú beléptetés  
+- **Adatbázis indulás:** automatikus létrehozás és SQL import az első futáskor  
 
 ---
 
@@ -49,6 +52,7 @@ Smarttable/
     app.py
     db.py
     requirements.txt
+    .env.example
   frontend_web/
     index.html
     restaurants.html
@@ -67,40 +71,64 @@ Smarttable/
 
 ---
 
-## Telepítés és futtatás (Windows / XAMPP ajánlott)
+## Futtatás
 
-### 1) Adatbázis import
-1. Indítsd el a **MySQL/MariaDB** szervert (pl. **XAMPP**).  
-2. Hozz létre egy adatbázist: `smarttable`  
-3. Importáld a dumpot: `database/smarttable.sql`  
+### 1) MySQL / MariaDB indítása
+Indítsd el a **MySQL/MariaDB** szervert, például **XAMPP** alatt.
 
-**Mintafelhasználók (a dumpban):**
-- Admin: `admin@example.com` / jelszó: `admin123`  
-- User: `user@example.com` / jelszó: `user123`  
+> Fontos: a projekt **nem igényel kézi adatbázis-létrehozást vagy kézi SQL importot**.  
+> Az első induláskor a backend automatikusan:
+> - létrehozza a `smarttable` adatbázist, ha még nem létezik,
+> - létrehozza a `user_smarttable` adatbázis-felhasználót, ha szükséges,
+> - importálja a `database/smarttable.sql` fájl tartalmát, ha a séma még hiányzik.
 
-### 2) Backend (Flask) futtatás
-1. Nyisd meg a projektet terminálban: `Smarttable/backend_flask`  
-2. Virtuális környezet (ajánlott):
-   ```bash
-   python -m venv venv
-   venv\Scripts\activate
-   ```
-3. Függőségek telepítése:
-   ```bash
-   pip install -r requirements.txt
-   ```
-4. Indítás:
-   ```bash
-   python app.py
-   ```
+### 2) Opcionális `.env` beállítás
+A `backend_flask/.env.example` fájlból készíthetsz `.env` fájlt, ha módosítani akarod az adatbázis vagy a session beállításait.
 
-### 3) Frontend megnyitása
-A backend a frontendet is kiszolgálja, ezért böngészőben nyisd meg:
+Alapértelmezett értékek:
+- `MYSQL_HOST=localhost`
+- `MYSQL_PORT=3306`
+- `MYSQL_DATABASE=smarttable`
+- `MYSQL_USER=user_smarttable`
+- `MYSQL_PASSWORD=smarttable123`
+- `MYSQL_BOOTSTRAP_USER=root`
+- `MYSQL_BOOTSTRAP_PASSWORD=` *(XAMPP esetén gyakran üres)*
 
-- **http://localhost:5000/**  *(automatikusan index.html)*
+Ha a root felhasználónak van jelszava, állítsd be a `MYSQL_BOOTSTRAP_PASSWORD` értékét is.
+
+### 3) Backend indítása
+Nyisd meg a projektet a `Smarttable/backend_flask` mappában, majd futtasd:
+
+```bash
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+python app.py
+```
+
+### 4) Frontend megnyitása
+A frontendet a Flask szolgálja ki, ezért a böngészőben ezt nyisd meg:
+
+- **http://localhost:5000/**
 
 ---
 
-## Licenc
+## Mintafelhasználók
 
-Oktatási célra készült vizsgaremek.
+Az első automatikus import után a rendszerben elérhető mintafelhasználók:
+
+- **Admin:** `admin@example.com` / `admin123`
+- **User:** `user@example.com` / `user123`
+
+---
+
+## Újrainicializálás fejlesztés közben
+
+Ha teljesen tiszta állapotból akarod újra feltölteni az adatbázist, akkor töröld a `smarttable` adatbázist MySQL-ben, majd indítsd újra a backendet.  
+A backend a következő induláskor ismét automatikusan létrehozza és feltölti az adatbázist.
+
+---
+
+## Megjegyzés
+
+A projekt oktatási célra készült vizsgaremek, ezért a fókusz a funkcionalitáson, az átlátható felépítésen és a bemutathatóságon volt.

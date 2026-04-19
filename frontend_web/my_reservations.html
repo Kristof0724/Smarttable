@@ -12,6 +12,9 @@
 </head>
 <body class="st-page st-site-nav-body">
 
+<!-- Ez az oldal a felhasználó saját foglalásait listázza és kezeli. -->
+
+<!-- Ez a navigáció a fő oldalak közti váltást és a kijelentkezést biztosítja. -->
 <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom st-site-navbar">
   <div class="container py-2">
     <a class="navbar-brand fw-bold" href="index.html">SmartTable</a>
@@ -37,6 +40,7 @@
 </nav>
 
 
+<!-- Ez a fő rész a foglaláskártyák betöltését és megjelenítését végzi. -->
 <main class="py-4">
   <div class="container">
     <div class="mb-3">
@@ -47,14 +51,17 @@
     <div id="err" class="error mb-3"></div>
     <div id="loading" class="hint mb-3">Betöltés...</div>
 
+    <!-- Ebbe a listába kerülnek a felhasználó foglalásai. -->
     <div id="list" class="row g-3"></div>
   </div>
 </main>
 
 
+<!-- Ez a tároló a rövid állapotüzenetek megjelenítésére szolgál. -->
 <div id="toastContainer" class="toast-container position-fixed top-0 end-0 p-3" style="z-index:1080;"></div>
 
 
+<!-- Ez a megerősítő ablak a foglalás lemondása előtt jelenik meg. -->
 <div class="modal fade" id="cancelModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -80,6 +87,7 @@
 
 <script type="module" src="js/my_reservations.js"></script>
 
+<!-- Ez az egységes lábléc minden fő oldalon megjelenik. -->
 <footer class="st-footer-minimal"><div class="inner"><i class="bi bi-c-circle me-1"></i>SmartTable</div></footer>
 
 </body>

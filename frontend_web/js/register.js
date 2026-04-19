@@ -1,3 +1,4 @@
+// Ez a modul a regisztrációs űrlap működését kezeli.
 import { api } from "./api.js";
 import { setUser } from "./auth.js";
 
@@ -7,15 +8,18 @@ const passwordInput = document.getElementById("password");
 const registerBtn = document.getElementById("registerBtn");
 const errorDiv = document.getElementById("err");
 
+// Megjeleníti a regisztrációs hibát.
 function showError(message) {
 	errorDiv.textContent = message || "";
 }
 
+// Frissíti a regisztráció gomb betöltési állapotát.
 function setLoading(loading) {
 	registerBtn.disabled = loading;
 	registerBtn.textContent = loading ? "Regisztráció..." : "Regisztráció";
 }
 
+// Ellenőrzi a regisztrációs mezők alapvető érvényességét.
 function validate(name, email, password) {
 	if (!name || name.length < 2) return "A név legalább 2 karakter legyen!";
 	if (!email || !email.includes("@"))

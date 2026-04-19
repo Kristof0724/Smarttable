@@ -1,3 +1,4 @@
+// Ez a modul a bejelentkezési űrlap működését kezeli.
 import { api } from "./api.js";
 import { setUser } from "./auth.js";
 
@@ -6,10 +7,12 @@ const passwordInput = document.getElementById("password");
 const loginBtn = document.getElementById("loginBtn");
 const errorDiv = document.getElementById("err");
 
+// Megjeleníti a bejelentkezési hibát.
 function showError(message) {
   errorDiv.textContent = message || "";
 }
 
+// Frissíti a bejelentkezés gomb betöltési állapotát.
 function setLoading(loading) {
   loginBtn.disabled = loading;
   loginBtn.textContent = loading ? "Bejelentkezés..." : "Belépés";

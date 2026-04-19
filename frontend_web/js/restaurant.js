@@ -1,3 +1,4 @@
+// Ez a modul az étterem részletező oldal adatait, menüjét és értékeléseit kezeli.
 import { api } from "./api.js";
 import { logout, getUser, redirectAdminUsers } from "./auth.js";
 
@@ -5,6 +6,7 @@ redirectAdminUsers();
 
 
 
+// HTML-biztosra alakítja a kiírt szöveget.
 function escapeHtml(s) {
 	return String(s ?? "")
 		.replaceAll("&", "&amp;")
@@ -14,6 +16,7 @@ function escapeHtml(s) {
 		.replaceAll("'", "&#039;");
 }
 
+// Formázott forint összeget készít a megjelenítéshez.
 function formatMoneyHuf(value) {
 	const n = Number(value || 0);
 	if (!n) return "";
@@ -62,34 +65,41 @@ let selectedRating = 5;
 
 let currentRestaurantId = null;
 
+// Megjeleníti az oldal fő hibaüzenetét.
 function showError(msg) {
 	errEl.textContent = msg || "";
 }
 
+// Ki- vagy bekapcsolja az oldal fő betöltési állapotát.
 function setLoading(isLoading) {
 	loadingEl.style.display = isLoading ? "block" : "none";
 	contentEl.style.display = isLoading ? "none" : "block";
 }
 
+// Megjeleníti az étlaphoz tartozó hibát.
 function showMenuError(msg) {
 	if (!menuErrEl) return;
 	menuErrEl.textContent = msg || "";
 }
+// Frissíti az étlap betöltési állapotát.
 function setMenuLoading(isLoading) {
 	if (!menuLoadingEl || !menuListEl) return;
 	menuLoadingEl.style.display = isLoading ? "block" : "none";
 	menuListEl.style.display = isLoading ? "none" : "block";
 }
 
+// Megjeleníti az értékeléshez tartozó hibát.
 function showReviewError(msg) {
 	if (!reviewErrEl) return;
 	reviewErrEl.textContent = msg || "";
 }
+// Megjeleníti az értékelés sikeres visszajelzését.
 function showReviewOk(msg) {
 	if (!reviewOkEl) return;
 	reviewOkEl.textContent = msg || "";
 }
 
+// Elkészíti a csillagos értékelés HTML-jét.
 function starsHtml(avg) {
 	const a = Number(avg || 0);
 	const full = Math.round(a);
@@ -100,6 +110,7 @@ function starsHtml(avg) {
 	return out;
 }
 
+// Kirajzolja az összesített értékelést és darabszámot.
 function renderRating(avg, count) {
 	const a = Number(avg || 0);
 	const c = Number(count || 0);
@@ -107,17 +118,20 @@ function renderRating(avg, count) {
 	ratingCountEl.textContent = c ? `${c} értékelés` : "Még nincs értékelés";
 }
 
+// Csoportosítva és formázva kirajzolja az étlapot.
 function renderMenu(items) {
 	if (!menuListEl) return;
 	if (!items || items.length === 0) {
 		menuListEl.innerHTML = `<div class="hint">Ehhez az étteremhez még nincs feltöltött étlap.</div>`;
 		return;
 	}
+	// Egységes alakra hozza a kategória-neveket a csoportosításhoz.
 	const norm = (s) =>
 		String(s ?? "")
 			.trim()
 			.toLowerCase();
 
+	// Meghatározza, hogy egy étel melyik fő menücsoportba kerüljön.
 	const mapGroup = (cat) => {
 		const c = norm(cat);
 
@@ -154,6 +168,7 @@ function renderMenu(items) {
 		groups[key].push(it);
 	}
 
+	// Név szerint rendezi a menüelemeket magyar ábécé szerint.
 	const sortByName = (a, b) =>
 		String(a?.name ?? "").localeCompare(String(b?.name ?? ""), "hu");
 
@@ -168,6 +183,7 @@ function renderMenu(items) {
 			) || sortByName(a, b),
 	);
 
+	// Elkészíti egy menücsoport táblázatos HTML blokkját.
 	const renderSection = (title, arr, showCategory = false) => {
 		if (!arr || arr.length === 0) return "";
 
@@ -220,6 +236,7 @@ function renderMenu(items) {
 	menuListEl.innerHTML = parts.filter(Boolean).join("");
 }
 
+// Megjeleníti az étterem aktuális ajánlatait.
 function renderDeals(items) {
 	if (!dealsEl) return;
 	if (!items || items.length === 0) {
@@ -253,6 +270,7 @@ function renderDeals(items) {
 		.join("");
 }
 
+// Kirajzolja az étterem értékeléseit és admin válaszait.
 async function renderReviews(items) {
 	if (!reviewsListEl) return;
 
@@ -335,11 +353,13 @@ async function renderReviews(items) {
 	});
 }
 
+// Kinyeri az étterem azonosítóját az URL-ből.
 function getIdFromQuery() {
 	const params = new URLSearchParams(window.location.search);
 	return params.get("id");
 }
 
+// Betölti és megjeleníti az étterem értékeléseit.
 async function loadReviews() {
 	if (!currentRestaurantId) return [];
 
@@ -369,6 +389,7 @@ logoutBtn?.addEventListener("click", () => {
 	window.location.href = "login.html";
 });
 
+// Bekapcsolja az értékelő csillagválasztó működését.
 function initStarPicker() {
 	if (!starPickerEl) return;
 
@@ -392,6 +413,7 @@ function initStarPicker() {
 	buttons[4].classList.remove("btn-light");
 }
 
+// Betölti az étterem összes fő adatát és kapcsolódó tartalmát.
 async function loadAll(id) {
 	currentRestaurantId = id;
 	showError("");
@@ -408,6 +430,7 @@ async function loadAll(id) {
 		const description = r?.description ?? "Nincs leírás.";
 		const ot = r?.opening_time ?? r?.openingTime ?? null;
 		const ct = r?.closing_time ?? r?.closingTime ?? null;
+		// Rövid HH:MM formára alakítja a megjelenített időket.
 		const fmtTime = (t) => {
 			if (!t) return null;
 			const s = String(t);

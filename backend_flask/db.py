@@ -1,3 +1,4 @@
+# Ez a modul kezeli a MySQL kapcsolatot, valamint az automatikus adatbázis-inicializálást.
 import os
 from pathlib import Path
 
@@ -21,6 +22,7 @@ BOOTSTRAP_USER = (os.getenv('MYSQL_BOOTSTRAP_USER') or 'root').strip() or 'root'
 BOOTSTRAP_PASSWORD = os.getenv('MYSQL_BOOTSTRAP_PASSWORD') or ''
 
 
+# Létrehoz egy MySQL kapcsolatot a megadott paraméterekkel.
 def _connect(host, port, user, password, database=None, autocommit=False):
     kwargs = {
         'host': host,
@@ -36,18 +38,22 @@ def _connect(host, port, user, password, database=None, autocommit=False):
     return pymysql.connect(**kwargs)
 
 
+# Biztonságosan escape-eli az SQL azonosítókat.
 def _q_ident(value: str) -> str:
     return f"`{str(value).replace('`', '``')}`"
 
 
+# Biztonságosan escape-eli az SQL szöveges értékeket.
 def _q_str(value: str) -> str:
     return "'" + str(value).replace("\\", "\\\\").replace("'", "\\'") + "'"
 
 
+# Visszaad egy kapcsolatot a SmartTable adatbázishoz.
 def get_conn():
     return _connect(DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME, autocommit=True)
 
 
+# Létrehozza az adatbázist és a szükséges DB-felhasználót, ha még hiányzik.
 def _ensure_database_user():
     bootstrap = _connect(BOOTSTRAP_HOST, BOOTSTRAP_PORT, BOOTSTRAP_USER, BOOTSTRAP_PASSWORD, None, autocommit=True)
     try:
@@ -62,6 +68,7 @@ def _ensure_database_user():
         bootstrap.close()
 
 
+# Az SQL dumpot futtatható utasításokra bontja.
 def _iter_sql_statements(sql_text: str):
     lines = []
     for raw in sql_text.replace('\ufeff', '').splitlines():
@@ -80,6 +87,7 @@ def _iter_sql_statements(sql_text: str):
             yield stmt
 
 
+# Kiszűri azokat az SQL utasításokat, amelyeket induláskor nem kell újra lefuttatni.
 def _should_skip(stmt: str) -> bool:
     upper = stmt.upper()
     return upper.startswith((
@@ -88,6 +96,7 @@ def _should_skip(stmt: str) -> bool:
     ))
 
 
+# Ellenőrzi, hogy a szükséges séma már létezik-e az adatbázisban.
 def _schema_exists(conn) -> bool:
     with conn.cursor() as cur:
         cur.execute(
@@ -98,6 +107,7 @@ def _schema_exists(conn) -> bool:
         return int(row.get('c') or 0) > 0
 
 
+# Lefuttatja a projekt SQL dumpját a cél adatbázison.
 def _execute_sql_dump(conn):
     sql_text = SQL_PATH.read_text(encoding='utf-8', errors='ignore')
     with conn.cursor() as cur:
@@ -108,6 +118,7 @@ def _execute_sql_dump(conn):
         conn.commit()
 
 
+# Automatikusan inicializálja az adatbázist az első indításkor.
 def init_db():
     _ensure_database_user()
     conn = get_conn()

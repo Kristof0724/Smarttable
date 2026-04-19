@@ -1,3 +1,4 @@
+// Ez a modul kezeli az admin felület dashboardját, listáit és műveleteit.
 import { api } from "./api.js";
 import { requireAuth, logout, getUser } from "./auth.js";
 
@@ -13,10 +14,12 @@ const errEl = document.getElementById("err");
 const okEl = document.getElementById("ok");
 const logoutBtn = document.getElementById("logoutBtn");
 
+// Megjeleníti a hibaüzenetet az admin oldalon.
 function showError(msg) {
 	errEl.textContent = msg || "";
 }
 
+// Rövid ideig megjeleníti a sikeres művelet üzenetét.
 function showOk(msg) {
 	okEl.textContent = msg || "";
 	if (msg) setTimeout(() => (okEl.textContent = ""), 1500);
@@ -27,6 +30,7 @@ logoutBtn?.addEventListener("click", () => {
 	window.location.href = "login.html";
 });
 
+// HTML-biztosra alakítja a dinamikusan kiírt szöveget.
 function escapeHtml(str) {
 	return String(str ?? "")
 		.replaceAll("&", "&amp;")
@@ -36,6 +40,7 @@ function escapeHtml(str) {
 		.replaceAll("'", "&#039;");
 }
 
+// Megrajzolja az értékelés csillagait HTML formában.
 function starsHtml(rating) {
 	const r = Math.max(0, Math.min(5, Number(rating) || 0));
 	let out = "";
@@ -45,6 +50,7 @@ function starsHtml(rating) {
 	return out;
 }
 
+// Magyar feliratra fordítja a foglalási státuszokat.
 function statusHu(status) {
 	const s = String(status || "").toLowerCase();
 	if (s === "pending") return "Függőben";
@@ -57,10 +63,12 @@ function statusHu(status) {
 
 
 const navLinks = Array.from(document.querySelectorAll("[data-nav]"));
+// Beállítja, melyik admin menüpont legyen aktív.
 function setActiveNav(key) {
 	navLinks.forEach((a) => a.classList.toggle("active", a.getAttribute("data-nav") === key));
 }
 
+// Megnyitja a kiválasztott admin szekciót, ha összecsukható.
 function ensureSectionOpen(key) {
 	
 	try {
@@ -113,12 +121,14 @@ const recentReservationsEl = document.getElementById("recentReservations");
 const recentReviewsEl = document.getElementById("recentReviews");
 const refreshEventsBtn = document.getElementById("refreshEventsBtn");
 
+// Frissíti egy százalékos sáv szélességét.
 function setBar(el, percent) {
 	if (!el) return;
 	const p = Math.max(0, Math.min(100, Math.round(percent || 0)));
 	el.style.width = `${p}%`;
 }
 
+// Kirajzolja az óránkénti terhelési oszlopokat.
 function renderHourly(load) {
 	if (!hourlyBars) return;
 	const arr = Array.isArray(load) ? load : [];
@@ -137,9 +147,11 @@ function renderHourly(load) {
 		.join("");
 }
 
+// Megjeleníti az admin figyelmeztetéseket.
 function renderAlerts(alerts) {
 	if (!alertsEl) return;
 	const arr = Array.isArray(alerts) ? alerts : [];
+	// Kiválasztja a figyelmeztetés típusához tartozó ikont.
 	const iconFor = (t) => {
 		if (t === "warning") return "bi-exclamation-triangle";
 		if (t === "info") return "bi-bell";
@@ -157,10 +169,12 @@ function renderAlerts(alerts) {
 		.join("");
 }
 
+// Megjeleníti a legutóbbi foglalásokat és értékeléseket.
 function renderRecentEvents(events) {
   const arr = Array.isArray(events) ? events : [];
   if (!recentReservationsEl || !recentReviewsEl) return;
 
+  // Rövid, jól olvasható formára vágja az esemény időbélyegét.
   const fmtTime = (s) => {
     const t = String(s || "").trim();
     if (!t) return "";
@@ -223,6 +237,7 @@ function renderRecentEvents(events) {
   }
 }
 
+// Betölti az admin dashboard összesítő adatait.
 async function loadDashboard() {
 	showError("");
 	try {
@@ -262,11 +277,13 @@ const qEl = document.getElementById("q");
 const statusFilterEl = document.getElementById("statusFilter");
 const refreshReservationsBtn = document.getElementById("refreshReservationsBtn");
 
+// Letiltja vagy engedélyezi a foglalásokhoz tartozó kezelőgombokat.
 function setLoading(isLoading) {
 	if (!loadingEl) return;
 	loadingEl.style.display = isLoading ? "block" : "none";
 }
 
+// Elkészíti egy admin foglaláskártya HTML-jét.
 function renderReservationCard(r) {
 	const id = r.id;
 	const restaurantName = escapeHtml(r.restaurantName ?? "Ismeretlen étterem");
@@ -309,6 +326,7 @@ function renderReservationCard(r) {
 	</div>`;
 }
 
+// Kliens oldalon megszűri a foglalási listát.
 function applyClientFilters(rows) {
 	const q = (qEl?.value || "").trim().toLowerCase();
 	const sf = statusFilterEl?.value || "";
@@ -323,6 +341,7 @@ function applyClientFilters(rows) {
 
 let allRows = [];
 
+// Beköti a foglaláskártyák admin műveleteit.
 function wireReservationActions() {
 	listEl?.querySelectorAll(".restaurant-card").forEach((card) => {
 		const id = Number(card.getAttribute("data-id"));
@@ -351,6 +370,7 @@ function wireReservationActions() {
 	});
 }
 
+// Kirajzolja a szűrt admin foglalási listát.
 function renderReservations() {
 	if (!listEl) return;
 	const rows = applyClientFilters(allRows);
@@ -362,6 +382,7 @@ function renderReservations() {
 	wireReservationActions();
 }
 
+// Betölti az összes admin által kezelhető foglalást.
 async function loadAllReservations() {
 	showError("");
 	setLoading(true);
@@ -386,11 +407,13 @@ const refreshReviewsBtn = document.getElementById("refreshReviewsBtn");
 const reviewsLoadingEl = document.getElementById("reviewsLoading");
 const reviewsListEl = document.getElementById("reviewsList");
 
+// Frissíti az értékelések betöltési állapotát.
 function setReviewsLoading(isLoading) {
 	if (!reviewsLoadingEl) return;
 	reviewsLoadingEl.style.display = isLoading ? "block" : "none";
 }
 
+// Elkészíti egy admin értékeléssor HTML-jét.
 function renderReviewRow(rv) {
 	const id = rv.id;
 	const restaurant = escapeHtml(rv.restaurantName ?? "");
@@ -435,6 +458,7 @@ function renderReviewRow(rv) {
 	</div>`;
 }
 
+// Betölti az admin számára látható értékeléseket.
 async function loadAdminReviews() {
 	showError("");
 	setReviewsLoading(true);
@@ -509,6 +533,7 @@ const addHotDealBtn = document.getElementById("addHotDealBtn");
 let adminRestaurants = [];
 let currentRestId = null;
 
+// Feltölti az admin étteremválasztó opcióit.
 function renderAdminRestaurantOptions() {
   if (!menuRestaurantSel) return;
   menuRestaurantSel.innerHTML = adminRestaurants
@@ -516,6 +541,7 @@ function renderAdminRestaurantOptions() {
     .join("");
 }
 
+// Elkészíti egy étlap tétel admin kártyáját.
 function renderMenuItemCard(mi) {
   const id = Number(mi.id);
   return `
@@ -546,6 +572,7 @@ function renderMenuItemCard(mi) {
   </div>`;
 }
 
+// Elkészíti egy akció admin kártyáját.
 function renderHotDealCard(hd) {
   const id = Number(hd.id);
   return `
@@ -576,6 +603,7 @@ function renderHotDealCard(hd) {
   </div>`;
 }
 
+// Betölti a kiválasztott étterem étlapját és akcióit.
 async function loadMenuAndDeals() {
   if (!currentRestId) return;
   showError("");
@@ -600,6 +628,7 @@ async function loadMenuAndDeals() {
   }
 }
 
+// Beköti az étlap- és akciókezelő gombok eseményeit.
 function wireMenuActions() {
   
   menuItemsListEl?.querySelectorAll("[data-mi-del]").forEach((btn) => {
@@ -716,6 +745,7 @@ function wireMenuActions() {
   });
 }
 
+// Betölti az adminhoz tartozó éttermek listáját.
 async function loadAdminRestaurants() {
   const list = await api.getRestaurants();
   adminRestaurants = Array.isArray(list) ? list : [];
@@ -795,17 +825,20 @@ const guestsTbodyEl = document.getElementById("guestsTbody");
 
 let allGuests = [];
 
+// Frissíti a vendéglista betöltési állapotát.
 function setGuestsLoading(isLoading) {
   if (!guestsLoadingEl) return;
   guestsLoadingEl.style.display = isLoading ? "block" : "none";
 }
 
+// Rövid, olvasható formára alakít egy időbélyeget.
 function fmtTsShort(s) {
   const v = String(s || "").trim();
   if (!v) return "";
   return v.length > 16 ? v.slice(0, 16) : v;
 }
 
+// Kliens oldalon megszűri a vendéglistát.
 function applyGuestFilters(rows) {
   const q = (guestQEl?.value || "").trim().toLowerCase();
   return (rows || []).filter((g) => {
@@ -815,6 +848,7 @@ function applyGuestFilters(rows) {
   });
 }
 
+// Kirajzolja a szűrt vendéglistát.
 function renderGuests() {
   if (!guestsTbodyEl) return;
   const rows = applyGuestFilters(allGuests);
@@ -844,6 +878,7 @@ function renderGuests() {
     .join("");
 }
 
+// Betölti a vendégek admin listáját.
 async function loadGuests() {
   showError("");
   setGuestsLoading(true);
@@ -864,6 +899,7 @@ guestQEl?.addEventListener("input", renderGuests);
 guestRoleEl?.addEventListener("change", loadGuests);
 
 
+// Mobilnézetben automatikusan összecsukja a szekciókat.
 function autoCollapseOnMobile() {
   try {
     if (window.innerWidth >= 992) return;
