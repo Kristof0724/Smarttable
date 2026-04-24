@@ -7,7 +7,7 @@ Célja, hogy a vendégek gyorsan tudjanak **éttermet keresni**, **idősávot v�
 
 ## Csapattagok és azonosítók (commit nevek)
 
-A commit history-ban több alias is szerepel, de a projektet **3 fő készítette**:
+A projektet **3 fő készítette**:
 
 - **Koncz Gábor Sándor** – `KG`, `kgabor016`, `koncz`  
 - **Boros Róbert** – `BR`, `Carl0s69`  
