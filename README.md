@@ -82,21 +82,7 @@ Indítsd el a **MySQL/MariaDB** szervert, például **XAMPP** alatt.
 > - létrehozza a `user_smarttable` adatbázis-felhasználót, ha szükséges,
 > - importálja a `database/smarttable.sql` fájl tartalmát, ha a séma még hiányzik.
 
-### 2) Opcionális `.env` beállítás
-A `backend_flask/.env.example` fájlból készíthetsz `.env` fájlt, ha módosítani akarod az adatbázis vagy a session beállításait.
-
-Alapértelmezett értékek:
-- `MYSQL_HOST=localhost`
-- `MYSQL_PORT=3306`
-- `MYSQL_DATABASE=smarttable`
-- `MYSQL_USER=user_smarttable`
-- `MYSQL_PASSWORD=smarttable123`
-- `MYSQL_BOOTSTRAP_USER=root`
-- `MYSQL_BOOTSTRAP_PASSWORD=` *(XAMPP esetén gyakran üres)*
-
-Ha a root felhasználónak van jelszava, állítsd be a `MYSQL_BOOTSTRAP_PASSWORD` értékét is.
-
-### 3) Backend indítása
+### 2) Backend indítása
 Nyisd meg a projektet a `Smarttable/backend_flask` mappában, majd futtasd:
 
 ```bash
@@ -106,7 +92,7 @@ pip install -r requirements.txt
 python app.py
 ```
 
-### 4) Frontend megnyitása
+### 3) Frontend megnyitása
 A frontendet a Flask szolgálja ki, ezért a böngészőben ezt nyisd meg:
 
 - **http://localhost:5000/**
